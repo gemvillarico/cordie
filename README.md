@@ -10,17 +10,17 @@ Requirements
 5. Maven
 
 Steps on importing database
-1. Create a database 'cordie' in terminal:\s\s
+1. Create a database 'cordie' in terminal:
 ```
 mysql> create database cordie;
 ```
 
-2. Import cordie.sql using terminal:\s\s
+2. Import cordie.sql using terminal:
 ```
 mysql -u <username> -p cordie < cordie.sql
 ```
 
-3. Create db user 'Cordie' with password 'pSJcwyTNSeLHAAV2':\s\s
+3. Create db user 'Cordie' with password 'pSJcwyTNSeLHAAV2':
 ```
 mysql> CREATE USER 'Cordie'@'localhost' IDENTIFIED BY 'pSJcwyTNSeLHAAV2';
 mysql> GRANT ALL PRIVILEGES ON * . * TO 'Cordie'@'localhost';
