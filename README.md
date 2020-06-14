@@ -10,19 +10,26 @@ Requirements
 5. Maven
 
 Steps on importing database
-1. Create a database 'cordie' in terminal:
+1. Create a database 'cordie' in terminal:\s\s
+```
 mysql> create database cordie;
+```
 
-2. Import cordie.sql using terminal:
+2. Import cordie.sql using terminal:\s\s
+```
 mysql -u <username> -p cordie < cordie.sql
+```
 
-3. Create db user 'Cordie' with password 'pSJcwyTNSeLHAAV2':
+3. Create db user 'Cordie' with password 'pSJcwyTNSeLHAAV2':\s\s
+```
 mysql> CREATE USER 'Cordie'@'localhost' IDENTIFIED BY 'pSJcwyTNSeLHAAV2';
 mysql> GRANT ALL PRIVILEGES ON * . * TO 'Cordie'@'localhost';
 mysql> FLUSH PRIVILEGES;
+```
 
 Running project
 1. Clone the repository into your workspace
 2. Open project in Eclipse
 3. Right click project > Run as > Maven clean
 4. Right click project > Run as > Run on Server > Choose Tomcat (Make sure that Apache Tomcat is added on Servers on Eclipse)
+
