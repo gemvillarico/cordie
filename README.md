@@ -1,6 +1,8 @@
 # cordie
 
-Cordie was created as my Special Problem / Thesis back when I was in college in University of the Philippines Manila. As I have written it when I was a mere student, the initial code was very basic and even not optimized. I decided to start making it a side project by slowly improving the design and applying newer technologies that I want to learn. For more information about my thesis, please see http://cas.upm.edu.ph:8080/xmlui/handle/123456789/76
+Cordie is web-based application that allows multiple users to draw UML diagrams collaboratively in real-time (think of it as somewhat like the Google Docs).
+
+It was created as my Special Problem / Thesis back when I was in college in University of the Philippines Manila. As I have written it when I was a mere student, the initial code was very basic and even not optimized. I decided to start making it a side project by slowly improving the design and applying newer technologies that I want to learn. For more information about my thesis, please see http://cas.upm.edu.ph:8080/xmlui/handle/123456789/76
 
 Requirements
 1. MySQL 8.0.20
