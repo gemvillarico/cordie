@@ -1,6 +1,6 @@
 package cordie;
 
-import cordie.diagram.CordieDiagram;
+import cordie.diagram.DiagramManager;
 import java.util.HashMap;
 import java.util.Collections;
 import java.util.Map;
@@ -9,11 +9,11 @@ import java.util.TimerTask;
 import java.util.ArrayList;
 
 public class CordieDiagramsMap {
-    private Map<String, CordieDiagram> map;
+    private Map<String, DiagramManager> map;
     private Timer timer;
 
     private CordieDiagramsMap() {
-        map = Collections.synchronizedMap(new HashMap<String, CordieDiagram>());
+        map = Collections.synchronizedMap(new HashMap<String, DiagramManager>());
 
         //int delay = 5 * 1000;   // delay for 5 sec.
         //int period = 10 * 1000;  // repeat every sec.

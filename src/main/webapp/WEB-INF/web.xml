@@ -53,11 +53,11 @@
             30
         </session-timeout>
     </session-config>
-    <resource-ref>
+    <!-- <resource-ref>
         <description>Database for CORDIE application</description>
         <res-ref-name>jdbc/CORDIE</res-ref-name>
         <res-type>javax.sql.DataSource</res-type>
         <res-auth>Container</res-auth>
         <res-sharing-scope>Shareable</res-sharing-scope>
-    </resource-ref>
+    </resource-ref> -->
 </web-app>

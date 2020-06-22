@@ -4,7 +4,7 @@ import cordie.diagram.operation.*;
 
 public class Transform {
     public static CordieOperation[] doTransform(CordieOperation[] tOps) {
-        if(tOps[0] instanceof CordieInsertOperation) { // <editor-fold>
+        if(tOps[0] instanceof CordieInsertOperation) { 
             CordieInsertOperation a = (CordieInsertOperation) tOps[0];
             if(tOps[1] instanceof CordieInsertOperation) {
                 CordieInsertOperation b = (CordieInsertOperation) tOps[1];
@@ -41,8 +41,8 @@ public class Transform {
                         b.incrementDestination();
                     }
                 }
-            } // </editor-fold>
-        } else if(tOps[0] instanceof CordieDeleteOperation) { // <editor-fold>
+            } 
+        } else if(tOps[0] instanceof CordieDeleteOperation) { 
             CordieDeleteOperation a = (CordieDeleteOperation) tOps[0];
             if(tOps[1] instanceof CordieInsertOperation) {
                 CordieInsertOperation b = (CordieInsertOperation) tOps[1];
@@ -83,8 +83,8 @@ public class Transform {
                     a.decrementPosition();
                     b.decrementDestination();
                 }
-            } // </editor-fold>
-        } else if(tOps[0] instanceof CordieEditOperation) { // <editor-fold>
+            } 
+        } else if(tOps[0] instanceof CordieEditOperation) { 
             CordieEditOperation a = (CordieEditOperation) tOps[0];
             if(tOps[1] instanceof CordieInsertOperation) {
                 CordieInsertOperation b = (CordieInsertOperation) tOps[1];
@@ -122,8 +122,8 @@ public class Transform {
                 } else {
                     //do nothing
                 }
-            } // </editor-fold>
-        } else if(tOps[0] instanceof CordieMoveOperation) { // <editor-fold>
+            } 
+        } else if(tOps[0] instanceof CordieMoveOperation) { 
             CordieMoveOperation a = (CordieMoveOperation) tOps[0];
             if(tOps[1] instanceof CordieInsertOperation) {
                 CordieInsertOperation b = (CordieInsertOperation) tOps[1];
@@ -232,7 +232,7 @@ public class Transform {
                     if(p < q && r < s) b.decrementDestination();
                     else if(p > q && r > s) b.incrementDestination();
 		}
-            } // </editor-fold>
+            } 
         }
 
         return tOps;

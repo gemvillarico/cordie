@@ -83,6 +83,6 @@ public class DisplayPicture extends HttpServlet {
     @Override
     public String getServletInfo() {
         return "Short description";
-    }// </editor-fold>
+    }
 
 }

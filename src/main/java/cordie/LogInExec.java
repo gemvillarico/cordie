@@ -19,7 +19,7 @@ public class LogInExec extends HttpServlet {
         ResultSet rs;
 
         try {
-            Class.forName("com.mysql.jdbc.Driver");
+            Class.forName("com.mysql.cj.jdbc.Driver");
             connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/Cordie", "Cordie", "pSJcwyTNSeLHAAV2");
 
             String username = request.getParameter("username");

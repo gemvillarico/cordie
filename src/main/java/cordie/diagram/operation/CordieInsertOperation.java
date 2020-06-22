@@ -36,7 +36,7 @@ public class CordieInsertOperation implements CordieOperation {
             obj.setAttribute("linejoin", parameterMap.get("linejoin")[0]);
             obj.setAttribute("linecap", parameterMap.get("linecap")[0]);
             obj.setAttribute("strokestyle", parameterMap.get("strokestyle")[0]);
-            // </editor-fold>
+            
         } else if(objType.equals("text")) { //<editor-fold>
             obj = new Element("text");
             obj.setAttribute("fontstyle", parameterMap.get("fontstyle")[0]);
@@ -50,7 +50,7 @@ public class CordieInsertOperation implements CordieOperation {
             obj.setAttribute("label", parameterMap.get("label")[0]);
             obj.setAttribute("textcolor", parameterMap.get("textcolor")[0]);
             obj.setAttribute("rotate", parameterMap.get("rotate")[0]);
-            // </editor-fold>
+            
         } else if(objType.equals("line")) { //<editor-fold>
             obj = new Element("line");
             obj.setAttribute("x1", parameterMap.get("x1")[0]);
@@ -64,7 +64,7 @@ public class CordieInsertOperation implements CordieOperation {
             obj.setAttribute("linejoin", parameterMap.get("linejoin")[0]);
             obj.setAttribute("linecap", parameterMap.get("linecap")[0]);
             obj.setAttribute("strokestyle", parameterMap.get("strokestyle")[0]);
-            // </editor-fold>
+            
         } else if(objType.equals("bezier")) { //<editor-fold>
             obj = new Element("bezier");
             obj.setAttribute("x1", parameterMap.get("x1")[0]);
@@ -82,7 +82,7 @@ public class CordieInsertOperation implements CordieOperation {
             obj.setAttribute("linejoin", parameterMap.get("linejoin")[0]);
             obj.setAttribute("linecap", parameterMap.get("linecap")[0]);
             obj.setAttribute("strokestyle", parameterMap.get("strokestyle")[0]);
-            // </editor-fold>
+            
         } else if(objType.equals("path")) { //<editor-fold>
             obj = new Element("path");
             String xcoordinate[] = parameterMap.get("x");
@@ -101,8 +101,8 @@ public class CordieInsertOperation implements CordieOperation {
             obj.setAttribute("linejoin", parameterMap.get("linejoin")[0]);
             obj.setAttribute("linecap", parameterMap.get("linecap")[0]);
             obj.setAttribute("strokestyle", parameterMap.get("strokestyle")[0]);
-            // </editor-fold>
-        } else if(objType.equals("class")) { // <editor-fold>
+            
+        } else if(objType.equals("class")) { 
             obj = new Element("class");
             obj.setAttribute("x", parameterMap.get("x")[0]);
             obj.setAttribute("y", parameterMap.get("y")[0]);
@@ -165,7 +165,7 @@ public class CordieInsertOperation implements CordieOperation {
                 }
             }
             obj.addContent(templatesNode);
-            // </editor-fold>
+            
         } else if(objType.equals("note") || objType.equals("frame")
                 || objType.equals("package1") || objType.equals("package2")
                 || objType.equals("component") || objType.equals("artifact")
@@ -192,7 +192,7 @@ public class CordieInsertOperation implements CordieOperation {
             obj.setAttribute("width", parameterMap.get("width")[0]);
             obj.setAttribute("x", parameterMap.get("x")[0]);
             obj.setAttribute("y", parameterMap.get("y")[0]);
-            // </editor-fold>
+            
         } else if(objType.equals("polygon")) { //<editor-fold>
             obj = new Element("polygon");
             String xcoordinate[] = parameterMap.get("x");
@@ -210,7 +210,7 @@ public class CordieInsertOperation implements CordieOperation {
             obj.setAttribute("linecap", parameterMap.get("linecap")[0]);
             obj.setAttribute("strokestyle", parameterMap.get("strokestyle")[0]);
             obj.setAttribute("fillcolor", parameterMap.get("fillcolor")[0]);
-            // </editor-fold>
+            
         } else if(objType.equals("polyline")) { //<editor-fold>
             obj = new Element("polyline");
             String xcoordinate[] = parameterMap.get("x");
@@ -230,8 +230,8 @@ public class CordieInsertOperation implements CordieOperation {
             obj.setAttribute("linejoin", parameterMap.get("linejoin")[0]);
             obj.setAttribute("linecap", parameterMap.get("linecap")[0]);
             obj.setAttribute("strokestyle", parameterMap.get("strokestyle")[0]);
-            // </editor-fold>
-        } else if(objType.equals("instance")) { // <editor-fold>
+            
+        } else if(objType.equals("instance")) { 
             obj = new Element("instance");
             obj.setAttribute("x", parameterMap.get("x")[0]);
             obj.setAttribute("y", parameterMap.get("y")[0]);
@@ -261,8 +261,8 @@ public class CordieInsertOperation implements CordieOperation {
                 }
             }
             obj.addContent(attributesNode);
-            // </editor-fold>
-        } else if(objType.equals("node")) { // <editor-fold>
+            
+        } else if(objType.equals("node")) { 
             obj = new Element("node");
             obj.setAttribute("x", parameterMap.get("x")[0]);
             obj.setAttribute("y", parameterMap.get("y")[0]);
@@ -302,8 +302,8 @@ public class CordieInsertOperation implements CordieOperation {
                 }
             }
             obj.addContent(taggedvaluesNode);
-            // </editor-fold>
-        } else if(objType.equals("statebox")) { // <editor-fold>
+            
+        } else if(objType.equals("statebox")) { 
             obj = new Element("statebox");
             obj.setAttribute("x", parameterMap.get("x")[0]);
             obj.setAttribute("y", parameterMap.get("y")[0]);
@@ -330,7 +330,7 @@ public class CordieInsertOperation implements CordieOperation {
                 }
             }
             obj.addContent(internalactivitysNode);
-            // </editor-fold>
+            
         } else if(objType.equals("expansionregion")) { //<editor-fold>
             obj = new Element("expansionregion");
             obj.setAttribute("fillcolor", parameterMap.get("fillcolor")[0]);
@@ -346,7 +346,7 @@ public class CordieInsertOperation implements CordieOperation {
             obj.setAttribute("listboxpin2x", parameterMap.get("listboxpin2x")[0]);
             obj.setAttribute("listboxpin2y", parameterMap.get("listboxpin2y")[0]);
             obj.setAttribute("listboxpinsize", parameterMap.get("listboxpinsize")[0]);
-            // </editor-fold>
+            
         }
     }
 

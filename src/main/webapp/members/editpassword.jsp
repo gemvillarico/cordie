@@ -49,7 +49,7 @@
            newpassword1 = request.getParameter("newpassword1");
            newpassword2 = request.getParameter("newpassword2");
 
-           Class.forName("com.mysql.jdbc.Driver");
+           Class.forName("com.mysql.cj.jdbc.Driver");
            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/Cordie", "Cordie", "pSJcwyTNSeLHAAV2");
            //Statement statement = connection.createStatement();
 
