@@ -20,10 +20,6 @@
         <servlet-name>DiagramList</servlet-name>
         <servlet-class>cordie.DiagramList</servlet-class>
     </servlet>
-    <servlet>
-        <servlet-name>FileServlet</servlet-name>
-        <servlet-class>cordie.FileServlet</servlet-class>
-    </servlet>
     <servlet-mapping>
         <servlet-name>LogInExec</servlet-name>
         <url-pattern>/LogInExec</url-pattern>
@@ -43,10 +39,6 @@
     <servlet-mapping>
         <servlet-name>CordieEditor</servlet-name>
         <url-pattern>/members/CordieEditor</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>FileServlet</servlet-name>
-        <url-pattern>/members/file</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

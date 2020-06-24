@@ -15,4 +15,9 @@ public class UserService {
 		return (User) em.createQuery("SELECT u FROM User u WHERE u.username = :username")
 				.setParameter("username", username).getSingleResult();
 	}
+	
+	public void updateUser(User user) {
+		em.merge(user);
+		em.flush();
+	}
 }

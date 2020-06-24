@@ -59,26 +59,45 @@ function saveAsImage() {
     selectNone();
     mainDraw();
     
-    var dataURI = canvas.toDataURL("image/png");
-    var dataPart = dataURI.indexOf(",") + 1;
-    
     if(indexTempSelected >= 0) {
         select(indexTempSelected);
         mainDraw();
     }
 
+    /*	Original implementation was submit the image data thru post, save that image data as file on server, then download from server.
+    	This was simplified by just downloading the image on client-side directly.
+    	
+    var dataURI = canvas.toDataURL("image/png");
+    var dataPart = dataURI.indexOf(",") + 1;
+    
     var xhReq = new createXMLHttpRequest();
     xhReq.onreadystatechange = addCollaboratorReqResult;
     xhReq.open("POST", URL, false);//true);
     xhReq.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     xhReq.send("action=createImage&data=" + encodeURIComponent(dataURI.substr(dataPart))
         + "&id=" + DIAGRAM_ID + "&editorID=" + editorID);
-    //+ "&dataurl=" + encodeURIComponent(canvas.toDataURL("image/png")));
-    //alert(canvas.toDataURL("image/png"));
-    //window.open(canvas.toDataURL("image/png"));
-    //alert(dataURI.substr(dataPart));
-
     window.location.href = "../members/file?editorID=" + editorID + "&id=" + DIAGRAM_ID;
-    // + "&data=" + encodeURIComponent(dataURI);//.substr(dataPart));
-    //dlFrame.src = "diagram.png";
+    */
+    
+    downloadCanvasContentFn("drawingArea", diagramTitle);
+}
+
+function downloadCanvasContentFn(canvasId = "", fileName = "") {
+    let id = "canvasDownloadLinkId";
+    //get the link if already exisit in page
+    let link = document.getElementById(id);
+
+    //if not create one
+    if (link == null) {
+        //Create a link
+        link = document.createElement('a');
+        link.id = id;
+    }
+
+    //set file name
+    link.download = fileName + '.png';
+    //get canvas as data URL
+    link.href = document.getElementById(canvasId).toDataURL()
+    //click -- this will download
+    link.click();
 }

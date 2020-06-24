@@ -8,6 +8,9 @@
 <%@page import="org.apache.commons.fileupload.disk.*"%>
 <%@page import="org.apache.commons.fileupload.servlet.*"%>
 <%@page import="java.sql.*"%>
+<%@page import="javax.naming.*"%>
+<%@page import="cordie.service.UserService"%>
+<%@page import="cordie.model.User"%>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
    "http://www.w3.org/TR/html4/loose.dtd">
@@ -47,91 +50,74 @@
        String firstname = "";
        String lastname = "";
        String email = "";
+       
+       Context ctx = new InitialContext();
+       UserService userService = (UserService) ctx.lookup("java:module/UserService");
+       User user = userService.getUserByUsername((String) session.getAttribute("USERNAME"));
+       
+       File file ;
+       int maxFileSize = 5000 * 1024;
+       int maxMemSize = 5000 * 1024;
+       String filePath = "uploaded_images/";
+       FileItem uploadedImage = null;
+       String extension = "";
 
-       try {
-           Class.forName("com.mysql.cj.jdbc.Driver");
-           Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/Cordie", "Cordie", "pSJcwyTNSeLHAAV2");
-           //Statement statement = connection.createStatement();
+       // Verify the content type
+       String contentType = request.getContentType();
+       if((contentType.indexOf("multipart/form-data") >= 0)) {
+           DiskFileItemFactory factory = new DiskFileItemFactory();
+           factory.setSizeThreshold(maxMemSize);
+           factory.setRepository(new File(""));
 
-           File file ;
-           int maxFileSize = 5000 * 1024;
-           int maxMemSize = 5000 * 1024;
-           String filePath = "uploaded_images/";
-           FileItem uploadedImage = null;
-           String extension = "";
+           ServletFileUpload upload = new ServletFileUpload(factory);
+           upload.setSizeMax( maxFileSize );
+           try {
+               // Parse the request to get file items.
+               List fileItems = upload.parseRequest(request);
+               // Process the uploaded file items
+               Iterator i = fileItems.iterator();
 
-           // Verify the content type
-           String contentType = request.getContentType();
-           if((contentType.indexOf("multipart/form-data") >= 0)) {
-               DiskFileItemFactory factory = new DiskFileItemFactory();
-               factory.setSizeThreshold(maxMemSize);
-               factory.setRepository(new File(""));
+               while (i.hasNext()) {
+                   FileItem item = (FileItem) i.next();
 
-               ServletFileUpload upload = new ServletFileUpload(factory);
-               upload.setSizeMax( maxFileSize );
-               try {
-                   // Parse the request to get file items.
-                   List fileItems = upload.parseRequest(request);
-                   // Process the uploaded file items
-                   Iterator i = fileItems.iterator();
-
-                   while (i.hasNext()) {
-                       FileItem item = (FileItem) i.next();
-
-                       if(item.isFormField()) {
-                           if(item.getFieldName().equals("firstname")) {
-                               firstname = item.getString();
-                           } else if(item.getFieldName().equals("lastname")) {
-                               lastname = item.getString();
-                           } else if(item.getFieldName().equals("email")) {
-                               email = item.getString();
-                           }
-                       } else {
-                           String fileName = item.getName();
-
-                           if(!fileName.equals("")) {
-                               if(fileName.lastIndexOf(".") >= 0) {
-                                   extension = fileName.substring(fileName.lastIndexOf("."));
-                               }
-
-                               uploadedImage = item;
-                           }
+                   if(item.isFormField()) {
+                       if(item.getFieldName().equals("firstname")) {
+                           firstname = item.getString();
+                       } else if(item.getFieldName().equals("lastname")) {
+                           lastname = item.getString();
+                       } else if(item.getFieldName().equals("email")) {
+                           email = item.getString();
                        }
-                   } // end while
-               } catch(Exception ex) {
-                   System.out.println(ex);
-               }
+                   } else {
+                       String fileName = item.getName();
+
+                       if(!fileName.equals("")) {
+                           if(fileName.lastIndexOf(".") >= 0) {
+                               extension = fileName.substring(fileName.lastIndexOf("."));
+                           }
+
+                           uploadedImage = item;
+                       }
+                   }
+               } // end while
+           } catch(Exception ex) {
+               System.out.println(ex);
            }
+       }
+       
+       user.setFirstname(firstname);
+       user.setLastname(lastname);
+       user.setEmail(email);
+       
+       if(uploadedImage != null) {
+    	   user.setDisplayImage(uploadedImage.get());
+       }
+       
+       userService.updateUser(user);
 
-           if(uploadedImage != null) {
-               String sql = "UPDATE user SET firstname = ?, lastname = ?, email = ?"
-                   + ", displaypic = ? WHERE username = ?";
-               PreparedStatement stmt = connection.prepareStatement(sql);
-               stmt.setString(1, firstname);
-               stmt.setString(2, lastname);
-               stmt.setString(3, email);
-               stmt.setString(4, session.getAttribute("USERNAME") + extension);
-               stmt.setString(5, (String) session.getAttribute("USERNAME"));
-               stmt.executeUpdate();
-
-               File oldDP = new File(filePath + session.getAttribute("DISPLAYPIC"));
-               oldDP.delete();
-               uploadedImage.write(new File(filePath + session.getAttribute("USERNAME") + extension)) ;
-               session.setAttribute("DISPLAYPIC", session.getAttribute("USERNAME") + extension);
-           } else {
-               String sql = "UPDATE user SET firstname = ?, lastname = ?, email = ?"
-                   + " WHERE username = ?";
-               PreparedStatement stmt = connection.prepareStatement(sql);
-               stmt.setString(1, firstname);
-               stmt.setString(2, lastname);
-               stmt.setString(3, email);
-               stmt.setString(4, (String) session.getAttribute("USERNAME"));
-               stmt.executeUpdate();
-           }
-
-           session.setAttribute("FIRSTNAME", firstname);
-           session.setAttribute("LASTNAME", lastname);
-           session.setAttribute("EMAIL", email);
+       session.setAttribute("FIRSTNAME", firstname);
+       session.setAttribute("LASTNAME", lastname);
+       session.setAttribute("EMAIL", email);
 %>
         <div style="text-align: center;">
             Your changes were saved. <a href="profile.jsp">View your profile</a>
@@ -146,11 +132,6 @@
     </body>
 </html>
 <%         return;
-           } catch (ClassNotFoundException e) {
-               System.err.println("Driver Error");
-           } catch (SQLException e) {
-               System.err.println("SQLException: " + e.getMessage());
-           }
    } else { %>
         <form name="editProfileForm" action="editprofile.jsp" method="POST" enctype="multipart/form-data">
             <table align="center" border="0" cellpadding="0">
@@ -159,7 +140,7 @@
                         <td>Current Display Picture</td>
                         <td>
                             <div class="displayPicContainer">
-                                <img class="displayPic" src="DisplayPicture?imgTitle=<%= session.getAttribute("DISPLAYPIC") %>"
+                                <img class="displayPic" src="DisplayPicture?username=<%= session.getAttribute("USERNAME") %>"
                                      alt="display picture"/>
                             </div>
                         </td>

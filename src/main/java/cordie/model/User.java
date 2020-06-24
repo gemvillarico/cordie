@@ -3,12 +3,14 @@ package cordie.model;
 import java.io.Serializable;
 import java.util.List;
 
+import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 
@@ -42,6 +44,9 @@ public class User implements Serializable {
 	@ManyToMany(mappedBy = "collaborators", fetch = FetchType.LAZY)
 	private List<Diagram> diagrams;
 	
+	@Lob @Basic(fetch = FetchType.LAZY)
+	@Column(name = "display_image")
+	private byte[] displayImage;
 	
 	public long getId() {
 		return id;
@@ -89,6 +94,14 @@ public class User implements Serializable {
 
 	public void setDiagrams(List<Diagram> diagrams) {
 		this.diagrams = diagrams;
+	}
+
+	public byte[] getDisplayImage() {
+		return displayImage;
+	}
+
+	public void setDisplayImage(byte[] displayImage) {
+		this.displayImage = displayImage;
 	}
 
 //	TODO

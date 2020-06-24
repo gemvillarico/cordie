@@ -38,7 +38,7 @@
                 <tr>
                     <th colspan="2">
                         <div class="displayPicContainer">
-                            <img class="displayPic" src="DisplayPicture?imgTitle=<%= session.getAttribute("DISPLAYPIC") %>"
+                            <img class="displayPic" src="DisplayPicture?username=<%= session.getAttribute("USERNAME") %>"
                                  alt="display picture"/>
                         </div>
                     </th>

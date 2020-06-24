@@ -30,7 +30,7 @@ function collaborators_init() {
         userPicContainer.setAttribute("class", "displayPicContainer2");
         var userPic = document.createElement("img");
         userPic.setAttribute("class", "displayPic2");
-        userPic.setAttribute("src", "DisplayPicture?imgTitle=" + collaborators[i].displaypic);
+        userPic.setAttribute("src", "DisplayPicture?username=" + collaborators[i].username);
         userPicContainer.appendChild(userPic);
 
         colR1C1.appendChild(userPicContainer);
@@ -100,7 +100,7 @@ function addCollaborator(collaborator) {
     userPicContainer.setAttribute("class", "displayPicContainer2");
     var userPic = document.createElement("img");
     userPic.setAttribute("class", "displayPic2");
-    userPic.setAttribute("src", "DisplayPicture?imgTitle=" + collaborators[newIndex].displaypic);
+    userPic.setAttribute("src", "DisplayPicture?username=" + collaborators[newIndex].username);
     userPicContainer.appendChild(userPic);
 
     colR1C1.appendChild(userPicContainer);

@@ -1,28 +1,46 @@
 package cordie;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLConnection;
+
+import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import java.io.*;
+import cordie.model.User;
+import cordie.service.UserService;
 
 public class DisplayPicture extends HttpServlet {
+	
+	private static final long serialVersionUID = 865455301646074516L;
+	
+	@Inject
+	private UserService userService;
    
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        File image = new File("uploaded_images/" + request.getParameter("imgTitle"));
+    	
+    	String username = request.getParameter("username");
+    	User user = userService.getUserByUsername(username);
 
         //get the image file
-        if (image.exists()) {//check whether it exist and if it is
-            String contentType = getServletContext().getMimeType(image.getName());
+    	if (user.getDisplayImage() != null) {
+    		InputStream inputStream = new ByteArrayInputStream(user.getDisplayImage());
+    		
+            String contentType = URLConnection.guessContentTypeFromStream(inputStream);
             
             int BUFFER_SIZE = 10240;
             // Set servlet response.
             response.reset();
             response.setBufferSize(BUFFER_SIZE );
             response.setContentType(contentType);
-            response.setHeader("Content-Length",  String.valueOf(image.length()));
+            //response.setHeader("Content-Length",  String.valueOf(image.length()));
 
             // Prepare streams.
             BufferedInputStream input = null;
@@ -30,7 +48,7 @@ public class DisplayPicture extends HttpServlet {
 
             try {
                 // Open streams.
-                input = new BufferedInputStream(new FileInputStream(image), BUFFER_SIZE);
+            	input = new BufferedInputStream(inputStream, BUFFER_SIZE);
                 output = new BufferedOutputStream(response.getOutputStream(), BUFFER_SIZE);
 
                 // Write image to response.
@@ -49,7 +67,6 @@ public class DisplayPicture extends HttpServlet {
         }
     } 
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /** 
      * Handles the HTTP <code>GET</code> method.
      * @param request servlet request
