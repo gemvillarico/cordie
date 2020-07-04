@@ -63,21 +63,6 @@ function saveAsImage() {
         select(indexTempSelected);
         mainDraw();
     }
-
-    /*	Original implementation was submit the image data thru post, save that image data as file on server, then download from server.
-    	This was simplified by just downloading the image on client-side directly.
-    	
-    var dataURI = canvas.toDataURL("image/png");
-    var dataPart = dataURI.indexOf(",") + 1;
-    
-    var xhReq = new createXMLHttpRequest();
-    xhReq.onreadystatechange = addCollaboratorReqResult;
-    xhReq.open("POST", URL, false);//true);
-    xhReq.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    xhReq.send("action=createImage&data=" + encodeURIComponent(dataURI.substr(dataPart))
-        + "&id=" + DIAGRAM_ID + "&editorID=" + editorID);
-    window.location.href = "../members/file?editorID=" + editorID + "&id=" + DIAGRAM_ID;
-    */
     
     downloadCanvasContentFn("drawingArea", diagramTitle);
 }

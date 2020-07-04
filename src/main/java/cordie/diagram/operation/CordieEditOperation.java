@@ -1,7 +1,7 @@
 package cordie.diagram.operation;
 
 import java.util.Map;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 public class CordieEditOperation implements CordieOperation {
     private int position;

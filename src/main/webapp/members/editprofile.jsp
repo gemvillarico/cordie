@@ -1,4 +1,4 @@
-<%@page import="org.apache.commons.lang3.StringEscapeUtils"%>
+<%@page import="org.apache.commons.text.StringEscapeUtils"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="java.io.*"%>
 <%@page import="java.util.*"%>
@@ -7,7 +7,6 @@
 <%@page import="org.apache.commons.fileupload.*"%>
 <%@page import="org.apache.commons.fileupload.disk.*"%>
 <%@page import="org.apache.commons.fileupload.servlet.*"%>
-<%@page import="java.sql.*"%>
 <%@page import="javax.naming.*"%>
 <%@page import="cordie.service.UserService"%>
 <%@page import="cordie.model.User"%>
@@ -58,7 +57,7 @@
        File file ;
        int maxFileSize = 5000 * 1024;
        int maxMemSize = 5000 * 1024;
-       String filePath = "uploaded_images/";
+       //String filePath = "uploaded_images/";
        FileItem uploadedImage = null;
        String extension = "";
 

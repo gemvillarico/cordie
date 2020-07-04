@@ -1,4 +1,4 @@
-<%@page import="org.apache.commons.lang3.StringEscapeUtils"%>
+<%@page import="org.apache.commons.text.StringEscapeUtils"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="java.io.*"%>
 <%@page import="java.util.*"%>
@@ -7,11 +7,13 @@
 <%@page import="org.apache.commons.fileupload.*"%>
 <%@page import="org.apache.commons.fileupload.disk.*"%>
 <%@page import="org.apache.commons.fileupload.servlet.*"%>
-<%@page import="java.sql.*"%>
+<%@page import="javax.naming.*"%>
+<%@page import="cordie.service.UserService"%>
+<%@page import="cordie.model.User"%>
+<%@page import="cordie.LogInExec"%>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
    "http://www.w3.org/TR/html4/loose.dtd">
-
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -43,126 +45,111 @@
       </div>
       <div id="main-content">
 <%
-   HashMap<String, String> errors = new HashMap<String, String>();;
-   boolean valid = true;
-   String username = "";
-   String password1 = "";
-   String password2 = "";
-   String firstname = "";
-   String lastname = "";
-   String email = "";
+	HashMap<String, String> errors = new HashMap<String, String>();;
+	boolean valid = true;
+	String username = "";
+	String password1 = "";
+	String password2 = "";
+	String firstname = "";
+	String lastname = "";
+	String email = "";
 
-   if(request.getMethod().equals("POST")) {
-       try {
-           Class.forName("com.mysql.cj.jdbc.Driver");
-           Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/Cordie", "Cordie", "pSJcwyTNSeLHAAV2");
-           //Statement statement = connection.createStatement();
+	if (request.getMethod().equals("POST")) {
+		Context ctx = new InitialContext();
+		UserService userService = (UserService) ctx.lookup("java:module/UserService");
 
-           File file ;
-           int maxFileSize = 5000 * 1024;
-           int maxMemSize = 5000 * 1024;
-           String filePath = "uploaded_images/";
-           FileItem uploadedImage = null;
-           String extension = "";
+		File file;
+		int maxFileSize = 5000 * 1024;
+		int maxMemSize = 5000 * 1024;
+		//String filePath = "uploaded_images/";
+		FileItem uploadedImage = null;
+		String extension = "";
 
-           // Verify the content type
-           String contentType = request.getContentType();
-           if((contentType.indexOf("multipart/form-data") >= 0)) {
-               DiskFileItemFactory factory = new DiskFileItemFactory();
-               factory.setSizeThreshold(maxMemSize);
-               factory.setRepository(new File(""));
-
-               ServletFileUpload upload = new ServletFileUpload(factory);
-               upload.setSizeMax( maxFileSize );
-               try {
-                   // Parse the request to get file items.
-                   List fileItems = upload.parseRequest(request);
-                   // Process the uploaded file items
-                   Iterator i = fileItems.iterator();
-
-                   while (i.hasNext()) {
-                       FileItem item = (FileItem) i.next();
-
-                       if(item.isFormField()) {
-                           if(item.getFieldName().equals("username")) {
-                               username = item.getString();
-                           } else if(item.getFieldName().equals("password1")) {
-                               password1 = item.getString();
-                           } else if(item.getFieldName().equals("password2")) {
-                               password2 = item.getString();
-                           } else if(item.getFieldName().equals("firstname")) {
-                               firstname = item.getString();
-                           } else if(item.getFieldName().equals("lastname")) {
-                               lastname = item.getString();
-                           } else if(item.getFieldName().equals("email")) {
-                               email = item.getString();
-                           }
-                       } else {
-                           String fileName = item.getName();
-
-                           if(!fileName.equals("")) {
-                               if(fileName.lastIndexOf(".") >= 0) {
-                                   extension = fileName.substring(fileName.lastIndexOf("."));
-                               }
-
-                               uploadedImage = item;
-                           }
-                       }
-                   } // end while
-
-                   if(username.equals("")) {
-                       errors.put("username", "Please enter a username");
-                       valid = false;
-                   } else {
-                       //check if username is already taken
-                       String sql = "SELECT COUNT(*) FROM user WHERE username = ? ";
-                       PreparedStatement stmt = connection.prepareStatement(sql);
-                       stmt.setString(1, username);
-                       ResultSet rs = stmt.executeQuery();
-                       //ResultSet rs = statement.executeQuery("SELECT COUNT(*) "
-                       //        + "FROM user WHERE username = '" + username + "'");
-                       rs.next();
-                       if(rs.getInt(1) > 0) {
-                           errors.put("username", "The username " + username +
-                                   " is already taken by another user.");
-                           valid = false;
-                       }
-                   }
-                   if(password1.equals("") ) {
-                       errors.put("password1", "Please enter a valid password");
-                       valid = false;
-                   }
-                   if(!password1.equals("") && (password2.equals("") ||
-                      !password1.equals(password2))) {
-                       errors.put("password2", "Please make sure your passwords match.");
-                       password2 = "";
-                       valid = false;
-                   }
-               } catch(Exception ex) {
-                   System.out.println(ex);
-               }
-           } else {
-           }
-
-           if(valid) {
-               String sql = "INSERT INTO user (username, password, firstname, "
-                       + "lastname, email, displaypic) VALUES( ?, md5(?), ?, ?, ?, ?)";
-               PreparedStatement stmt = connection.prepareStatement(sql);
-               stmt.setString(1, username);
-               stmt.setString(2, password1);
-               stmt.setString(3, firstname);
-               stmt.setString(4, lastname);
-               stmt.setString(5, email);
-               stmt.setString(6, username + extension);
-               stmt.executeUpdate();
-               /*int i = statement.executeUpdate("INSERT INTO user (username, "
-                       + "password, firstname, lastname, email, displaypic)"
-                       + " VALUES('" + username + "', md5('" + password1 + "'), '"
-                       + firstname + "', '" + lastname + "', '" + email + "', '"
-                       + username + extension + "')");*/
-
-               if(uploadedImage != null)
-                   uploadedImage.write(new File(filePath + username + extension)) ;
+		// Verify the content type
+		String contentType = request.getContentType();
+		if ((contentType.indexOf("multipart/form-data") >= 0)) {
+			DiskFileItemFactory factory = new DiskFileItemFactory();
+			factory.setSizeThreshold(maxMemSize);
+			factory.setRepository(new File(""));
+		
+			ServletFileUpload upload = new ServletFileUpload(factory);
+			upload.setSizeMax(maxFileSize);
+			try {
+				// Parse the request to get file items.
+				List<FileItem> fileItems = upload.parseRequest(request);
+				// Process the uploaded file items
+				Iterator<FileItem> i = fileItems.iterator();
+		
+				while (i.hasNext()) {
+					FileItem item = (FileItem) i.next();
+		
+					if (item.isFormField()) {
+						if (item.getFieldName().equals("username")) {
+							username = item.getString();
+						} else if (item.getFieldName().equals("password1")) {
+							password1 = item.getString();
+						} else if (item.getFieldName().equals("password2")) {
+							password2 = item.getString();
+						} else if (item.getFieldName().equals("firstname")) {
+							firstname = item.getString();
+						} else if (item.getFieldName().equals("lastname")) {
+							lastname = item.getString();
+						} else if (item.getFieldName().equals("email")) {
+							email = item.getString();
+						}
+					} else {
+						String fileName = item.getName();
+		
+						if (!fileName.equals("")) {
+							if (fileName.lastIndexOf(".") >= 0) {
+								extension = fileName.substring(fileName.lastIndexOf("."));
+							}
+		
+							uploadedImage = item;
+						}
+					}
+				} // end while
+		
+				if (username.equals("")) {
+					errors.put("username", "Please enter a username");
+					valid = false;
+				} else {
+		
+					User existingUser = userService.getUserByUsername(username);
+		
+					if (existingUser != null) {
+						errors.put("username", "The username " + username + " is already taken by another user.");
+						valid = false;
+					}
+				}
+				if (password1.equals("")) {
+					errors.put("password1", "Please enter a valid password");
+					valid = false;
+				}
+				if (!password1.equals("") && (password2.equals("") || !password1.equals(password2))) {
+					errors.put("password2", "Please make sure your passwords match.");
+					password2 = "";
+					valid = false;
+				}
+			} catch (Exception ex) {
+				System.out.println(ex);
+			}
+		} else {
+		}
+		
+		if (valid) {
+			User user = new User();
+			user.setUsername(username);
+			user.setPassword(LogInExec.encode(password1));
+			user.setFirstname(firstname);
+			user.setLastname(lastname);
+			user.setEmail(email);
+			
+			if (uploadedImage != null) {
+				user.setDisplayImage(uploadedImage.get());
+			}
+			
+			userService.insertUser(user);
 %>
     <table align="center">
         <thead>
@@ -202,18 +189,13 @@
     </body>
 </html>
 <%
-               return;
-           } else { %>
+			return;
+		} else { %>
         <div>
             <p>Please fill in the necessary fields.</p>
         </div>
-<%         }
-       } catch (ClassNotFoundException e) {
-           System.err.println("Driver Error");
-       } catch (SQLException e) {
-           System.err.println("SQLException: " + e.getMessage());
-       }
-   } %>
+<%		}
+	} %>
         <form name="signupForm" action="signup.jsp" method="POST" enctype="multipart/form-data">
             <table align="center">
                 <thead>

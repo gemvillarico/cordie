@@ -1,6 +1,9 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@page import="java.sql.*"%>
 <%@page import="java.util.*"%>
+<%@page import="javax.naming.*"%>
+<%@page import="cordie.service.UserService"%>
+<%@page import="cordie.model.User"%>
+<%@page import="cordie.LogInExec"%>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
    "http://www.w3.org/TR/html4/loose.dtd">
@@ -44,28 +47,39 @@
    String newpassword2 = "";
 
    if(request.getMethod().equals("POST")) {
+	   String username = (String) session.getAttribute("USERNAME");
+	   
        try {
+    	   Context ctx = new InitialContext();
+           UserService userService = (UserService) ctx.lookup("java:module/UserService");
+           
            password = request.getParameter("password");
            newpassword1 = request.getParameter("newpassword1");
            newpassword2 = request.getParameter("newpassword2");
+           
+           User user = userService.getUserByUsername(username);
+           
+           if (!user.getPassword().equals(LogInExec.encode(password))) {
+        	   valid = false;
+               errors.put("password", "Wrong Password");
+           }
 
-           Class.forName("com.mysql.cj.jdbc.Driver");
-           Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/Cordie", "Cordie", "pSJcwyTNSeLHAAV2");
+           //Class.forName("com.mysql.cj.jdbc.Driver");
+           //Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/Cordie", "Cordie", "pSJcwyTNSeLHAAV2");
            //Statement statement = connection.createStatement();
 
-           String sql = "SELECT COUNT(*) FROM user WHERE username = ? AND password = md5(?)";
+           /* String sql = "SELECT COUNT(*) FROM user WHERE username = ? AND password = md5(?)";
            PreparedStatement stmt = connection.prepareStatement(sql);
            stmt.setString(1, (String) session.getAttribute("USERNAME"));
            stmt.setString(2, password);
            ResultSet rs = stmt.executeQuery();
-           /*ResultSet rs = statement.executeQuery("SELECT COUNT(*) "
-                   + "FROM user WHERE username = '" + session.getAttribute("USERNAME")
-                   + "' AND password = md5('" + password + "')");*/
+
            rs.next();
            if(rs.getInt(1) == 0) {
                valid = false;
                errors.put("password", "Wrong Password");
-           }
+           } */
+           
            if(newpassword1.equals("") ) {
                valid = false;
                errors.put("newpassword1", "Please enter a valid password");
@@ -78,13 +92,15 @@
            }
 
            if(valid) {
-               sql = "UPDATE user SET password = md5(?) WHERE username = ?";
+               /* sql = "UPDATE user SET password = md5(?) WHERE username = ?";
                stmt = connection.prepareStatement(sql);
                stmt.setString(1, newpassword1);
                stmt.setString(2, (String) session.getAttribute("USERNAME"));
-               stmt.executeUpdate();
-               //int i = statement.executeUpdate("UPDATE user SET password = md5('" +
-               //    newpassword1 + "')" + " WHERE username='" + session.getAttribute("USERNAME") + "'");
+               stmt.executeUpdate(); */
+               
+               user.setPassword(LogInExec.encode(newpassword1));
+               userService.updateUser(user);
+               
 %>
         <div style="text-align: center;">Your password has been saved. Go back to <a href="profile.jsp">profile</a></div>
 
@@ -99,11 +115,8 @@
 </html>
 <%             return;
            }
-
        } catch (ClassNotFoundException e) {
            System.err.println("Driver Error");
-       } catch (SQLException e) {
-           System.err.println("SQLException: " + e.getMessage());
        }
    }
 %>

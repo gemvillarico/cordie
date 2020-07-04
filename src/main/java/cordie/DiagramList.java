@@ -3,11 +3,7 @@ package cordie;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.ListIterator;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -27,188 +23,135 @@ import cordie.diagram.DiagramManager;
 import cordie.diagram.operation.CordieOperation;
 import cordie.diagram.operation.CordieRemoveCollaboratorOperation;
 import cordie.model.Diagram;
+import cordie.model.User;
 import cordie.service.DiagramService;
 import cordie.service.UserService;
 
 public class DiagramList extends HttpServlet {
 
 	private static final long serialVersionUID = -2297856658189536959L;
-	
+
 	@Inject
 	private DiagramService diagramService;
-	
-	@Inject 
+
+	@Inject
 	private UserService userService;
-	
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        PrintWriter out = response.getWriter();
 
-        Connection connection = null;
-        ResultSet rs;
-        
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/Cordie", "Cordie", "pSJcwyTNSeLHAAV2");
+	@Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		response.setContentType("text/html;charset=UTF-8");
+		PrintWriter out = response.getWriter();
 
-            String username = (String) request.getSession().getAttribute("USERNAME");
+		String username = (String) request.getSession().getAttribute("USERNAME");
 
-            String action = request.getParameter("action");
-            if(action == null) {
-                // do nothing
-            } else if(action.equals("add")) {
-                
-                String sql = "INSERT INTO Cordie.diagram (creator, title, "
-                        + "date_last_edited, date_created, description) "
-                        + "VALUES (?, ?, DEFAULT, CURRENT_TIMESTAMP, ?)";
-                PreparedStatement stmt = connection.prepareStatement(sql);
-                stmt.setString(1, username);
-                stmt.setString(2, request.getParameter("title"));
-                stmt.setString(3, request.getParameter("description"));
-                stmt.executeUpdate();
+		String action = request.getParameter("action");
+		if (action == null) {
+			// do nothing
+		} else if (action.equals("add")) {
+			Diagram newDiagram = new Diagram();
+			newDiagram.setCreator(userService.getUserByUsername(username));
+			newDiagram.setTitle(request.getParameter("title"));
+			newDiagram.setDescription(request.getParameter("description"));
 
-                // get id of newly created diagram
-                sql = "SELECT diagram_id FROM diagram WHERE creator = ? AND title = ? "
-                        + "ORDER BY date_created DESC";
-                stmt = connection.prepareStatement(sql);
-                stmt.setString(1, username);
-                stmt.setString(2, request.getParameter("title"));
-                rs = stmt.executeQuery();
+			// create an XML file for the newly created diagram
+			Element root = new Element("diagram");
+			Document dom = new Document(root);
+			XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
 
-                String id = "";
-                if(rs.next()) {
-                    id = rs.getString("diagram_id");
-                }
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			outputter.output(dom, bos);
+			newDiagram.setDiagramContent(bos.toByteArray());
 
-                // create an XML file for the newly created diagram
-                Element root = new Element("diagram");
-                Document dom = new Document(root);
-                XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
-                
-//                FileWriter writer = new FileWriter("cordie_diagram_files/" + id + ".xml");
-//                outputter.output(dom, writer);
-//                writer.close();
-                
-                
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    			outputter.output(dom, bos);
-    			Diagram diagram = diagramService.getDiagramById(Long.parseLong(id));
-    			diagram.setDiagramContent(bos.toByteArray());
-//    			TODO diagramService.updateDiagram(diagram);
-            } else if(action.equals("delete")) {
-                
-                String id = request.getParameter("id");
+			diagramService.insertDiagram(newDiagram);
+		} else if (action.equals("delete")) {
+			String id = request.getParameter("id");
 
-                // check if diagram has active users
-                CordieDiagramsMap cdm = CordieDiagramsMap.getInstance();
-                @SuppressWarnings("unchecked")
+			// check if diagram has active users
+			CordieDiagramsMap cdm = CordieDiagramsMap.getInstance();
+			@SuppressWarnings("unchecked")
+			Map<String, DiagramManager> diagrams = cdm.getMap();
+			synchronized (diagrams) {
+				if (diagrams.containsKey(id)) {
+					diagrams.remove(id);
+				}
+			}
+
+			Diagram diagramToDelete = diagramService.getDiagramById(Long.parseLong(request.getParameter("id")));
+			diagramService.deleteDiagram(diagramToDelete);
+		} else if (action.equals("leave")) {
+			String id = request.getParameter("id");
+
+			Diagram currentDiagram = diagramService.getDiagramById(Long.parseLong(id));
+			if (currentDiagram.getCreator().getUsername().equals(username)) {
+				// TODO show error message if creator of diagram tries to leave; should not be
+				// possible
+			} else {
+				User currentUser = userService.getUserByUsername(username);
+				currentDiagram.getCollaborators().remove(currentUser);
+				diagramService.updateDiagram(currentDiagram);
+
+				// create message for users currently editing the diagram
+				CordieDiagramsMap cdm = CordieDiagramsMap.getInstance();
+				@SuppressWarnings("unchecked")
 				Map<String, DiagramManager> diagrams = cdm.getMap();
-                synchronized(diagrams) {
-                    if(diagrams.containsKey(id)) {
-                        //diagrams.get(id).cancelTimer();
-                        diagrams.remove(id);
-                    }
-                }
+				if (diagrams.containsKey(id)) {
+					CordieOperation co = new CordieRemoveCollaboratorOperation(username);
+					diagrams.get(id).queueMessage(new CordieMessage(null, co, 0, 0));
+				}
+			}
+		} else if (action.equals("copy")) {
+			Diagram origDiagram = diagramService.getDiagramById(Long.parseLong(request.getParameter("from")));
 
-                // delete from database
-                String sql = "DELETE FROM diagram WHERE diagram_id = ? AND creator = ?";
-                PreparedStatement stmt = connection.prepareStatement(sql);
-                stmt.setInt(1, Integer.parseInt(id));
-                stmt.setString(2, username);
-                stmt.executeUpdate();
+			Diagram copyDiagram = new Diagram();
+			copyDiagram.setCreator(userService.getUserByUsername(username));
+			copyDiagram.setTitle(request.getParameter("title"));
+			copyDiagram.setDescription(request.getParameter("description"));
+			copyDiagram.setDiagramContent(origDiagram.getDiagramContent());
 
-                // delete XML file
-//                File xmlFile = new File("cordie_diagram_files/" + id + ".xml");
-//                xmlFile.delete();
-            } else if(action.equals("leave")) {
-                
-                String id = request.getParameter("id");
-                String sql = "DELETE FROM collaborator WHERE diagram_id = ? "
-                        + "AND user_id = (select user_id from user where username = ?) AND is_creator = 'NO'";
-                PreparedStatement stmt = connection.prepareStatement(sql);
-                stmt.setInt(1, Integer.parseInt(id));
-                stmt.setString(2, username);
-                stmt.executeUpdate();
+			diagramService.insertDiagram(copyDiagram);
+		}
 
-                // create message for users currently editing the diagram
-                CordieDiagramsMap cdm = CordieDiagramsMap.getInstance();
-                @SuppressWarnings("unchecked")
-				Map<String, DiagramManager> diagrams = cdm.getMap();
-                if(diagrams.containsKey(id)) {
-                    CordieOperation co = new CordieRemoveCollaboratorOperation(username);
-                    diagrams.get(id).queueMessage(new CordieMessage(null, co, 0, 0));
-                }
-                
-            } else if(action.equals("copy")) {
-            	Diagram origDiagram = diagramService.getDiagramById(Long.parseLong(request.getParameter("from")));
+		User currentUser = userService.getUserByUsername(username);
+		out.print("[");
+		ListIterator<Diagram> diagramListIter = currentUser.getDiagrams().listIterator();
+		while (diagramListIter.hasNext()) {
+			Diagram diagram = diagramListIter.next();
 
-            	Diagram copyDiagram = new Diagram();
-            	copyDiagram.setCreator(userService.getUserByUsername(username));
-            	copyDiagram.setTitle(request.getParameter("title"));
-            	copyDiagram.setDescription(request.getParameter("description"));
-            	copyDiagram.setDiagramContent(origDiagram.getDiagramContent());
-            	
-            	diagramService.insertDiagram(copyDiagram);
-            }
+			String collaboratorsStr = "[";
+			ListIterator<User> collaboratorListIter = diagram.getCollaborators().listIterator();
+			while (collaboratorListIter.hasNext()) {
+				User collaborator = collaboratorListIter.next();
+				collaboratorsStr += "\"" + collaborator.getUsername() + "\"";//collaborator.getId() + "\"";
 
-            String sql = "SELECT diagram.* FROM diagram INNER JOIN collaborator"
-                    + " ON diagram.diagram_id = collaborator.diagram_id"
-                    + " WHERE collaborator.user_id = (select user_id from user where username = ?)";
-            PreparedStatement stmt = connection.prepareStatement(sql);
-            stmt.setString(1, username);
-            rs = stmt.executeQuery();
+				if (collaboratorListIter.hasNext()) {
+					collaboratorsStr += ", ";
+				}
+			}
+			collaboratorsStr += "]";
 
-            out.print("[");
-            while(rs.next()) {
-                //Connection connection2 = DriverManager.getConnection("jdbc:mysql://localhost:3306/Cordie", "Cordie", "pSJcwyTNSeLHAAV2");
-                String sql2 = "SELECT user_id FROM collaborator WHERE diagram_id = ?";
-                PreparedStatement stmt2 = connection.prepareStatement(sql2);
-                stmt2.setInt(1, Integer.parseInt(rs.getString("diagram_id")));
-                ResultSet rs2 = stmt2.executeQuery();
-                
-                String collaborators = "[";
-                while(rs2.next()) {
-                    collaborators += "\"" + rs2.getString("user_id")+ "\"";
-                    if(!rs2.isLast()) collaborators += ", ";
-                }
-                collaborators += "]";
-                
-                String id = rs.getString("diagram_id");
-                String title = rs.getString("title");
-                String description = rs.getString("description");
-                String creator = rs.getString("creator");
-                String dateCreated = rs.getString("date_created");
-                //String dateLastEdited = rs.getString("date_last_edited");
-                
-                out.print("[\"" + id + "\", \"" + StringEscapeUtils.escapeJava(title)
-                        + "\", \"" + StringEscapeUtils.escapeJava(description)
-                        + "\", \"" + StringEscapeUtils.escapeJava(creator) + "\", \""
-                        + dateCreated + "\", " + collaborators + "]"); 
-                        //"\", \"" + dateLastEdited + "\"]");
+			out.print("[\"" + diagram.getId() + "\", \"" + StringEscapeUtils.escapeJava(diagram.getTitle()) + "\", \""
+					+ StringEscapeUtils.escapeJava(diagram.getDescription()) + "\", \""
+					+ StringEscapeUtils.escapeJava(diagram.getCreator().getUsername()) + "\", \""
+					+ diagram.getDateCreated() + "\", " + collaboratorsStr + "]");
 
-                if(!rs.isLast()) out.print(", ");
-            }
-            out.print("]");
-        } catch (ClassNotFoundException e) {
-            System.err.println("Driver Error");
-        } catch (SQLException e) {
-            System.err.println("SQLException: " + e.getMessage());
-        } finally {
-            out.close();
-        }
-    }
+			if (diagramListIter.hasNext()) {
+				out.print(", ");
+			}
+		}
+		out.print("]");
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-        response.sendRedirect("diagrams.jsp");
-    } 
+		out.close();
+	}
 
-    @Override
-    public String getServletInfo() {
-        return "Handles request for the list of diagrams "
-                + "accessible to a user (in JSON format).";
-    }
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		response.sendRedirect("diagrams.jsp");
+	}
+
+	@Override
+	public String getServletInfo() {
+		return "Handles request for the list of diagrams " + "accessible to a user (in JSON format).";
+	}
 }

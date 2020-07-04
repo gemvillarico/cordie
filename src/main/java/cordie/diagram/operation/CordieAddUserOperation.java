@@ -1,6 +1,6 @@
 package cordie.diagram.operation;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 public class CordieAddUserOperation implements CordieOperation {
     private String user;

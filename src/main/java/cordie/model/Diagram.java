@@ -12,10 +12,12 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.PrePersist;
+import javax.persistence.PreRemove;
+import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -26,9 +28,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Entity
 @Table(name = "diagram")
 public class Diagram implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -1047659828603537454L;
 
 	@Id
@@ -36,8 +35,8 @@ public class Diagram implements Serializable {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "creator")
+	@ManyToOne(cascade = { CascadeType.REFRESH })
+	@JoinColumn(name = "creator", nullable = false)
 	private User creator;
 
 	@Column(name = "title")
@@ -60,11 +59,7 @@ public class Diagram implements Serializable {
 	@Column(name = "diagram_content", columnDefinition = "BLOB")
 	private byte[] diagramContent;
 
-	
-	@ManyToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
-	@JoinTable(name = "collaborator", 
-		joinColumns = {@JoinColumn(name = "diagram_id") }, 
-		inverseJoinColumns = {@JoinColumn(name = "user_id") })
+	@ManyToMany(mappedBy = "diagrams", cascade = { CascadeType.REFRESH }, fetch = FetchType.EAGER)
 	private List<User> collaborators;
 
 	public long getId() {
@@ -75,8 +70,6 @@ public class Diagram implements Serializable {
 		this.id = id;
 	}
 
-//	@ManyToOne
-//    @JoinColumn(name = "creator")
 	public User getCreator() {
 		return creator;
 	}
@@ -131,5 +124,50 @@ public class Diagram implements Serializable {
 
 	public void setCollaborators(List<User> collaborators) {
 		this.collaborators = collaborators;
+	}
+
+	@PreUpdate
+	@PrePersist
+	public void updateTimeStamps() {
+		dateLastEdited = new Date();
+		if (dateCreated == null) {
+			dateCreated = new Date();
+		}
+	}
+
+	@PreRemove
+	public void onPreRemove() {
+		if (this.collaborators == null) {
+			return;
+		}
+		
+		for (User collaborator : this.collaborators) {
+			List<Diagram> collaboratorDiagrams = collaborator.getDiagrams();
+			if (collaboratorDiagrams != null && collaboratorDiagrams.contains(this)) {
+				collaboratorDiagrams.remove(this);
+			}
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (int) (id ^ (id >>> 32));
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Diagram other = (Diagram) obj;
+		if (id != other.id)
+			return false;
+		return true;
 	}
 }

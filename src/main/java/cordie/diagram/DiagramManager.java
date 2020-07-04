@@ -2,15 +2,11 @@ package cordie.diagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -18,6 +14,10 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.jdom.Document;
@@ -36,6 +36,8 @@ import cordie.diagram.operation.CordieOperation;
 import cordie.diagram.operation.CordieRemoveCollaboratorOperation;
 import cordie.diagram.operation.CordieRemoveUserOperation;
 import cordie.model.Diagram;
+import cordie.model.User;
+import cordie.service.UserService;
 
 /**
  * Manages a "live" diagram; i.e., a diagram currently being edited by a user
@@ -44,18 +46,14 @@ import cordie.model.Diagram;
  *
  */
 public class DiagramManager {
-//    private long diagramID;
 	private String diagramTitle;
 	private String creator;
-	private Date dateCreated;
-	private List<String> collaboratorList;
-	private Map<String, String[]> collaboratorInfo;
-
+	private Date dateCreated;	
+	private Set<String> collaboratorInfo;
 	private Map<String, CordieClient> currentEditors;
 	private ArrayList<String> currentUsers;
 	private int editorsCount;
 	private ArrayBlockingQueue<CordieMessage> messageQueue;
-	
 
 	private Document dom;
 	private Element root;
@@ -92,7 +90,14 @@ public class DiagramManager {
 
 		this.root = dom.getRootElement();
 
-		setCollaboratorsAndOtherAttributes();
+		this.collaboratorInfo = new HashSet<>();
+		for (User user : diagram.getCollaborators()) {
+			this.collaboratorInfo.add(user.getUsername());
+		}
+		
+		this.diagramTitle = diagram.getTitle();
+		this.creator = diagram.getCreator().getUsername();
+		this.dateCreated = diagram.getDateCreated();
 
 		this.currentEditors = new HashMap<String, CordieClient>();
 		this.currentUsers = new ArrayList<String>();
@@ -104,57 +109,12 @@ public class DiagramManager {
 		timer.scheduleAtFixedRate(new MonitorEditors(), 5 * 1000, CHECKING_PERIOD);
 	}
 
-	private void setCollaboratorsAndOtherAttributes() {
-		Connection connection = null;
-		String sql = "";
-		PreparedStatement stmt;
-		ResultSet rs;
-
-		this.collaboratorList = new ArrayList<String>();
-		this.collaboratorInfo = new HashMap<String, String[]>();
-
-		try {
-			Class.forName("com.mysql.cj.jdbc.Driver");
-			connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/Cordie", "Cordie",
-					"pSJcwyTNSeLHAAV2");
-
-			sql = "SELECT user.username, user.firstname, user.lastname, user.email,"
-					+ " user.displaypic FROM user INNER JOIN collaborator " + "ON user.user_id = collaborator.user_id "
-					+ "WHERE collaborator.diagram_id = ?";
-			stmt = connection.prepareStatement(sql);
-			stmt.setLong(1, this.diagram.getId());
-			rs = stmt.executeQuery();
-
-			while (rs.next()) {
-				collaboratorList.add(rs.getString("username"));
-				String[] temp = { rs.getString("firstname"), rs.getString("lastname"), rs.getString("email"),
-						rs.getString("displaypic") };
-				this.collaboratorInfo.put(rs.getString("username"), temp);
-			}
-
-			sql = "SELECT title, creator, date_created FROM diagram WHERE diagram_id = ?";
-			stmt = connection.prepareStatement(sql);
-			stmt.setLong(1, this.diagram.getId());
-			rs = stmt.executeQuery();
-
-			if (rs.next()) {
-				this.diagramTitle = rs.getString("title");
-				this.creator = rs.getString("creator");
-				this.dateCreated = rs.getDate("date_created");
-			}
-		} catch (ClassNotFoundException e) {
-			System.err.println("Driver Error");
-		} catch (SQLException e) {
-			System.err.println("SQLException: " + e.getMessage());
-		}
-	}
-
 	public boolean isInactive() {
 		return currentEditors.isEmpty();
 	}
 
 	public boolean allowsEditFrom(String username) {
-		return collaboratorList.contains(username);
+		return collaboratorInfo.contains(username);
 	}
 
 	public String getCreator() {
@@ -291,7 +251,6 @@ public class DiagramManager {
 
 				// if(!collaboratorList.contains(userToRemove)) return;
 
-				collaboratorList.remove(userToRemove);
 				collaboratorInfo.remove(userToRemove);
 				// currentEditors.remove(userToRemove);
 			}
@@ -318,10 +277,7 @@ public class DiagramManager {
 			
 		} else if (op instanceof CordieAddCollaboratorOperation) { 
 			CordieAddCollaboratorOperation caco = (CordieAddCollaboratorOperation) op;
-			collaboratorList.add(caco.getUsername());
-			String[] temp = { caco.getFirstname(), caco.getLastname(), caco.getEmail(), caco.getDisplaypic() };
-			collaboratorInfo.put(caco.getUsername(), temp);
-			
+			collaboratorInfo.add(caco.getUsername());			
 		}
 
 		// Broadcast the operation just applied to all other clients
@@ -329,6 +285,11 @@ public class DiagramManager {
 			if (!editorID.equals(sender))
 				currentEditors.get(editorID).send(op, sender);
 		}
+	}
+	
+	private UserService getUserService() throws NamingException {
+		Context ctx = new InitialContext();
+	    return (UserService) ctx.lookup("java:module/UserService");
 	}
 
 	@Override
@@ -338,19 +299,28 @@ public class DiagramManager {
 				+ "\", \"creator\" : \"" + StringEscapeUtils.escapeJava(creator) + "\", \"datecreated\" : \""
 				+ dateCreated + "\", \"collaborators\" : [";
 
-		ListIterator<String> itr = collaboratorList.listIterator();
-		while (itr.hasNext()) {
-			if (itr.hasPrevious())
-				temp += ", ";
-
-			String currCol = (String) itr.next();
-			String[] currColInfo = collaboratorInfo.get(currCol);
-			temp += "{\"username\" : \"" + StringEscapeUtils.escapeJava(currCol) + "\", \"firstname\" : \""
-					+ StringEscapeUtils.escapeJava(currColInfo[0]) + "\", \"lastname\" : \""
-					+ StringEscapeUtils.escapeJava(currColInfo[1]) + "\", \"email\" : \""
-					+ StringEscapeUtils.escapeJava(currColInfo[2]) + "\", \"displaypic\" : \""
-					+ StringEscapeUtils.escapeJava(currColInfo[3]) + "\"}";
+		try {
+			UserService userService = getUserService();
+			Iterator<String> itr = collaboratorInfo.iterator();
+			while (itr.hasNext()) {
+				String currCol = (String) itr.next();
+				
+				User user = userService.getUserByUsername(currCol);
+				temp += "{\"username\" : \"" + StringEscapeUtils.escapeJava(currCol) + "\", \"firstname\" : \""
+						+ StringEscapeUtils.escapeJava(user.getFirstname()) + "\", \"lastname\" : \""
+						+ StringEscapeUtils.escapeJava(user.getLastname()) + "\", \"email\" : \""
+						+ StringEscapeUtils.escapeJava(user.getEmail()) + "\""
+						+ "}";
+				
+				if (itr.hasNext()) {
+					temp += ", ";
+				}
+			}
+		} catch (NamingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+		
 
 		temp += "], \"currentusers\" : [";
 		boolean first = true;
@@ -374,8 +344,6 @@ public class DiagramManager {
 		temp += "] }";
 		return temp;
 	}
-
-	
 
 	public class CordieClient {
 		private String username;
@@ -508,8 +476,6 @@ public class DiagramManager {
 			}
 		}
 	}
-
-	
 
 	/**
 	 *  Periodically checks which editors are no longer active

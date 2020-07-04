@@ -2,10 +2,11 @@ package cordie.diagram;
 
 import java.util.ListIterator;
 import org.jdom.Element;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 public class CordieObjectConverter {
-    public static String convert(Element elt) {
+    @SuppressWarnings("rawtypes")
+	public static String convert(Element elt) {
         String eltName = elt.getName();
         if(eltName.equals("rectangle") || eltName.equals("ellipse") || eltName.equals("lifeline")
                 || eltName.equals("arrowhead") || eltName.equals("activationbar")
