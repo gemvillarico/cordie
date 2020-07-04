@@ -7,31 +7,37 @@ It was created as my Special Problem / Thesis back when I was in college in Univ
 Requirements
 1. MySQL 8.0.20
 2. Eclipse (I used Version: 2019-12 (4.14.0))
-3. Tomcat 9.0
+3. WildFly 19
 4. Java 8
 5. Maven
 
-Steps on importing database
+A. Steps on importing the database
 1. Create a database 'cordie' in terminal:
 ```
 mysql> create database cordie;
 ```
 
-2. Import cordie.sql using terminal:
+2. Import resources/mysql/cordie.sql using terminal:
 ```
 mysql -u <username> -p cordie < cordie.sql
 ```
 
-3. Create db user 'Cordie' with password 'pSJcwyTNSeLHAAV2':
+3. Create db user 'Cordie' with password 'pSJcwyTNSeLHAAV2' (or you can set to your own password, just make sure to update standalone.xml accordingly):
 ```
 mysql> CREATE USER 'Cordie'@'localhost' IDENTIFIED BY 'pSJcwyTNSeLHAAV2';
 mysql> GRANT ALL PRIVILEGES ON * . * TO 'Cordie'@'localhost';
 mysql> FLUSH PRIVILEGES;
 ```
 
-Running project
+B. Set up WildFly application server
+1. Download WildFly application server (this application used version 19).
+2. Add the com.mysql module to WildFly by copying resources/wildfly/modules/com/mysql to your ${WildFlyHome}/modules/system/layers/base/com directory.
+3. Update your WildFly standalone.xml to the one in resources/wildfly/standalone.xml
+
+
+C. Running project
 1. Clone the repository into your workspace
 2. Open project in Eclipse
 3. Right click project > Run as > Maven clean
-4. Right click project > Run as > Run on Server > Choose Tomcat (Make sure that Apache Tomcat is added on Servers on Eclipse)
+4. Right click project > Run as > Run on Server > Choose WildFly (Make sure that WildFly is added on Servers on Eclipse)
 
