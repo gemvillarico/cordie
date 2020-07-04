@@ -40,4 +40,7 @@ C. Running project
 2. Open project in Eclipse
 3. Right click project > Run as > Maven clean
 4. Right click project > Run as > Run on Server > Choose WildFly (Make sure that WildFly is added on Servers on Eclipse)
+5. Open http://localhost:8080/cordie in your browser.
+6. You can login using preincluded mico/mico as username/password.
+
 
