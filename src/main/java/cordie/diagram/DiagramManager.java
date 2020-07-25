@@ -289,7 +289,7 @@ public class DiagramManager {
 	
 	private UserService getUserService() throws NamingException {
 		Context ctx = new InitialContext();
-	    return (UserService) ctx.lookup("java:module/UserService");
+	    return (UserService) ctx.lookup("java:global/cordie/UserService");
 	}
 
 	@Override

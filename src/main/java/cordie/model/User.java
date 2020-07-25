@@ -43,7 +43,7 @@ public class User implements Serializable {
 	@Column(name = "email")
 	private String email;
 
-	@ManyToMany(cascade = { CascadeType.REFRESH }, fetch = FetchType.EAGER)
+	@ManyToMany(cascade = { CascadeType.REFRESH, CascadeType.PERSIST }, fetch = FetchType.EAGER)
 	@JoinTable(name = "collaborator", 
 			inverseJoinColumns = {@JoinColumn(name = "diagram_id") }, 
 			joinColumns = {@JoinColumn(name = "user_id") })
@@ -138,5 +138,15 @@ public class User implements Serializable {
 		if (id != other.id)
 			return false;
 		return true;
+	}
+	
+	public void addDiagram(Diagram diagram) {
+		this.diagrams.add(diagram);
+		diagram.getCollaborators().add(this);
+	}
+	
+	public void removeDiagram(Diagram diagram) {
+		this.diagrams.remove(diagram);
+		diagram.getCollaborators().remove(this);
 	}
 }

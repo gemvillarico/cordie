@@ -125,8 +125,8 @@ public class CordieEditor extends HttpServlet {
 					return;
 				}
 				
-				currentDiagram.getCollaborators().add(newCollaboratorUser);
-				diagramService.updateDiagram(currentDiagram);
+				currentDiagram.addCollaborator(newCollaboratorUser);
+				userService.updateUser(newCollaboratorUser);
 			
 				// Send out an AddCollaborator operation to the diagram if it's currently live
 				if (diagrams.containsKey(id)) {
@@ -165,10 +165,8 @@ public class CordieEditor extends HttpServlet {
 					return;
 				}
 				
-				currentDiagram.getCollaborators().remove(toRemoveUser);
-				toRemoveUser.getDiagrams().remove(currentDiagram);
-				
-				diagramService.updateDiagram(currentDiagram);
+				currentDiagram.removeCollaborator(toRemoveUser);
+				userService.updateUser(toRemoveUser);
 				
 				// Send out a RemoveCollaborator operation to the diagram if it's currently live
 				if (diagrams.containsKey(id)) {

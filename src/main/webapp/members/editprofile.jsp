@@ -51,7 +51,7 @@
        String email = "";
        
        Context ctx = new InitialContext();
-       UserService userService = (UserService) ctx.lookup("java:module/UserService");
+       UserService userService = (UserService) ctx.lookup("java:global/cordie/UserService");
        User user = userService.getUserByUsername((String) session.getAttribute("USERNAME"));
        
        File file ;

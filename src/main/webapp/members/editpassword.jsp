@@ -51,7 +51,7 @@
 	   
        try {
     	   Context ctx = new InitialContext();
-           UserService userService = (UserService) ctx.lookup("java:module/UserService");
+           UserService userService = (UserService) ctx.lookup("java:global/cordie/UserService");
            
            password = request.getParameter("password");
            newpassword1 = request.getParameter("newpassword1");

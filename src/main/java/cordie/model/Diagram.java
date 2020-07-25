@@ -59,7 +59,7 @@ public class Diagram implements Serializable {
 	@Column(name = "diagram_content", columnDefinition = "BLOB")
 	private byte[] diagramContent;
 
-	@ManyToMany(mappedBy = "diagrams", cascade = { CascadeType.REFRESH }, fetch = FetchType.EAGER)
+	@ManyToMany(mappedBy = "diagrams", cascade = { CascadeType.REFRESH, CascadeType.PERSIST }, fetch = FetchType.EAGER)
 	private List<User> collaborators;
 
 	public long getId() {
@@ -169,5 +169,15 @@ public class Diagram implements Serializable {
 		if (id != other.id)
 			return false;
 		return true;
+	}
+	
+	public void addCollaborator(User user) {
+		this.collaborators.add(user);
+		user.getDiagrams().add(this);
+	}
+	
+	public void removeCollaborator(User user) {
+		this.collaborators.remove(user);
+		user.getDiagrams().remove(this);
 	}
 }

@@ -122,12 +122,18 @@ public class DiagramList extends HttpServlet {
 			ListIterator<User> collaboratorListIter = diagram.getCollaborators().listIterator();
 			while (collaboratorListIter.hasNext()) {
 				User collaborator = collaboratorListIter.next();
+				
+				if (collaborator.equals(currentUser)) {
+					continue;
+				}
+				
 				collaboratorsStr += "\"" + collaborator.getUsername() + "\"";//collaborator.getId() + "\"";
 
-				if (collaboratorListIter.hasNext()) {
-					collaboratorsStr += ", ";
-				}
+				collaboratorsStr += ", ";
 			}
+			
+			collaboratorsStr = collaboratorsStr.replaceAll(", $", "");
+			
 			collaboratorsStr += "]";
 
 			out.print("[\"" + diagram.getId() + "\", \"" + StringEscapeUtils.escapeJava(diagram.getTitle()) + "\", \""

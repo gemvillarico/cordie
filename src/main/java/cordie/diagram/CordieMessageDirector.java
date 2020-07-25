@@ -52,7 +52,7 @@ public class CordieMessageDirector implements Runnable {
 			cordieDiagram.getDiagram().setDiagramContent(bos.toByteArray());
 
 			InitialContext initialContext = new InitialContext();
-			DiagramService diagramService = (DiagramService) initialContext.lookup("java:module/DiagramService");
+			DiagramService diagramService = (DiagramService) initialContext.lookup("java:global/cordie/DiagramService");
 			
 			diagramService.updateDiagram(cordieDiagram.getDiagram());
 		} catch (IOException e) {

@@ -56,7 +56,7 @@
 
 	if (request.getMethod().equals("POST")) {
 		Context ctx = new InitialContext();
-		UserService userService = (UserService) ctx.lookup("java:module/UserService");
+		UserService userService = (UserService) ctx.lookup("java:global/cordie/UserService");
 
 		File file;
 		int maxFileSize = 5000 * 1024;

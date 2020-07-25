@@ -24,8 +24,6 @@ function getDiagramList() {
     xhReq.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     xhReq.send("");
     
-    //alert(xhReq.responseText);
-
     try {
        dlist = JSON.parse(xhReq.responseText);
     } catch(e) {
