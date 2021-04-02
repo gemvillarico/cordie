@@ -12,15 +12,20 @@ pipeline {
             }
         }
         
-        stage('Build') {
+        stage('Build') {            
             steps {
-                echo 'Building...'
+            	echo 'Building...'
+            	
+                sh 'mvn -Dmaven.test.failure.ignore=true install'
+                
+                archiveArtifacts artifacts: 'target/*.war'
             }
         }
         
+        
         stage('Test') {
             steps {
-                sh 'mvn -Dmaven.test.failure.ignore=true install' 
+                echo 'Testing...'
             }
         }
         
