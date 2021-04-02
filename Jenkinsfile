@@ -1,18 +1,9 @@
 pipeline {
     agent any
-
-    tools { 
-        maven 'Maven 4.4.0' 
-        jdk 'JDK 11' 
-    }
     
     stages {
         stage ('Initialize') {
             steps {
-                sh '''
-                    echo "PATH = ${PATH}"
-                    echo "M2_HOME = ${M2_HOME}"
-                ''' 
             }
         }
         
@@ -24,7 +15,7 @@ pipeline {
         
         stage('Test') {
             steps {
-                echo 'Testing..'
+                sh 'mvn -Dmaven.test.failure.ignore=true install' 
             }
         }
         
