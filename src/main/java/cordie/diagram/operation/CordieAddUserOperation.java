@@ -3,23 +3,24 @@ package cordie.diagram.operation;
 import org.apache.commons.text.StringEscapeUtils;
 
 public class CordieAddUserOperation implements CordieOperation {
-    private String user;
+	private static final long serialVersionUID = 80140344743490485L;
 
-    public CordieAddUserOperation(String u) {
-        this.user = u;
-    }
+	private String user;
 
-    public CordieAddUserOperation(CordieAddUserOperation co) {
-        this.user = co.getUser();
-    }
+	public CordieAddUserOperation(String u) {
+		this.user = u;
+	}
 
-    public String getUser() {
-        return user;
-    }
+	public CordieAddUserOperation(CordieAddUserOperation co) {
+		this.user = co.getUser();
+	}
 
-    @Override
-    public String toString() {
-        return "{ \"optype\" : \"adduser\", \"collaborator\" : \""
-                + StringEscapeUtils.escapeJava(user) + "\" }";
-    }
+	public String getUser() {
+		return user;
+	}
+
+	@Override
+	public String toString() {
+		return "{ \"optype\" : \"adduser\", \"collaborator\" : \"" + StringEscapeUtils.escapeJava(user) + "\" }";
+	}
 }

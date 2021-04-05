@@ -45,6 +45,7 @@ import cordie.service.UserService;
  * @author gemvillarico
  *
  */
+@Deprecated
 public class DiagramManager {
 	private String diagramTitle;
 	private String creator;
@@ -317,7 +318,6 @@ public class DiagramManager {
 				}
 			}
 		} catch (NamingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

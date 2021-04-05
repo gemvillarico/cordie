@@ -1,4 +1,6 @@
 package cordie.diagram.operation;
 
-public interface CordieOperation {
+import java.io.Serializable;
+
+public interface CordieOperation extends Serializable {
 }

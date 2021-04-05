@@ -2,7 +2,9 @@ package cordie.diagram.operation;
 
 public class CordieNoneOperation implements CordieOperation {
 
-    public CordieNoneOperation() {
+    private static final long serialVersionUID = 1166181715547800854L;
+
+	public CordieNoneOperation() {
     }
 
     @Override

@@ -33,6 +33,5 @@ public class UserService {
 
 	public void updateUser(User user) {
 		em.merge(user);
-//		em.flush();
 	}
 }

@@ -8,6 +8,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.ArrayList;
 
+@Deprecated
 public class CordieDiagramsMap {
     private Map<String, DiagramManager> map;
     private Timer timer;

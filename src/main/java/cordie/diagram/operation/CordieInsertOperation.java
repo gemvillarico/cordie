@@ -5,7 +5,10 @@ import org.jdom.Element;
 import cordie.diagram.CordieObjectConverter;
 
 public class CordieInsertOperation implements CordieOperation {
-    private Element obj;
+    
+	private static final long serialVersionUID = 6912352706922632886L;
+	
+	private Element obj;
     private int position;
 
     public CordieInsertOperation(CordieInsertOperation co) {

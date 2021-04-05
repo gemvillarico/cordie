@@ -3,7 +3,10 @@ package cordie.diagram.operation;
 import org.apache.commons.text.StringEscapeUtils;
 
 public class CordieRemoveUserOperation implements CordieOperation {
-    private String toRemove;
+    
+	private static final long serialVersionUID = -105081685033791941L;
+	
+	private String toRemove;
 
     public CordieRemoveUserOperation(CordieRemoveUserOperation co) {
         this.toRemove = co.getUsername();

@@ -15,6 +15,7 @@ import cordie.service.DiagramService;
 /**
  * Thread that processes the messages in the message queue
  */
+@Deprecated
 public class CordieMessageDirector implements Runnable {
 	private DiagramManager cordieDiagram;
 	private XMLOutputter outputter;
@@ -58,7 +59,6 @@ public class CordieMessageDirector implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (NamingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

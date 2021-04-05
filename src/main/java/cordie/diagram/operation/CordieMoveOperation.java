@@ -1,54 +1,56 @@
 package cordie.diagram.operation;
 
 public class CordieMoveOperation implements CordieOperation {
-    private int position;
-    private int destination;
 
-    public CordieMoveOperation(CordieMoveOperation cmo) {
-        position = cmo.getPosition();
-        destination = cmo.getDestination();
-    }
+	private static final long serialVersionUID = -1782684380902256125L;
 
-    public CordieMoveOperation(int iPos, int iDest) {
-        position = iPos;
-        destination = iDest;
-    }
+	private int position;
+	private int destination;
 
-    public void decrementPosition() {
-        position--;
-    }
+	public CordieMoveOperation(CordieMoveOperation cmo) {
+		position = cmo.getPosition();
+		destination = cmo.getDestination();
+	}
 
-    public void incrementPosition() {
-        position++;
-    }
+	public CordieMoveOperation(int iPos, int iDest) {
+		position = iPos;
+		destination = iDest;
+	}
 
-    public int getPosition() {
-        return position;
-    }
+	public void decrementPosition() {
+		position--;
+	}
 
-    public void setPosition(int iPos) {
-        position = iPos;
-    }
+	public void incrementPosition() {
+		position++;
+	}
 
-    public int getDestination() {
-        return destination;
-    }
+	public int getPosition() {
+		return position;
+	}
 
-    public void setDestination(int iDes) {
-        destination = iDes;
-    }
+	public void setPosition(int iPos) {
+		position = iPos;
+	}
 
-    public void decrementDestination() {
-        destination--;
-    }
+	public int getDestination() {
+		return destination;
+	}
 
-    public void incrementDestination() {
-        destination++;
-    }
+	public void setDestination(int iDes) {
+		destination = iDes;
+	}
 
-    @Override
-    public String toString() {
-        return "{ \"optype\" : \"move\", \"position\" : " + position + ", "
-                + "\"destination\" : " + destination + " }";
-    }
+	public void decrementDestination() {
+		destination--;
+	}
+
+	public void incrementDestination() {
+		destination++;
+	}
+
+	@Override
+	public String toString() {
+		return "{ \"optype\" : \"move\", \"position\" : " + position + ", " + "\"destination\" : " + destination + " }";
+	}
 }

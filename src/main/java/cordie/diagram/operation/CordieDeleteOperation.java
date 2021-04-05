@@ -1,7 +1,10 @@
 package cordie.diagram.operation;
 
 public class CordieDeleteOperation implements CordieOperation {
-    private int position;
+
+	private static final long serialVersionUID = -1864450023934714198L;
+
+	private int position;
 
     public CordieDeleteOperation(CordieDeleteOperation cdo) {
         position = cdo.getPosition();

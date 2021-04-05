@@ -38,7 +38,6 @@ public class LogInExec extends HttpServlet {
 			    return;
 			}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

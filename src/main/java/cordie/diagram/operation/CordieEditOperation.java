@@ -4,7 +4,10 @@ import java.util.Map;
 import org.apache.commons.text.StringEscapeUtils;
 
 public class CordieEditOperation implements CordieOperation {
-    private int position;
+
+	private static final long serialVersionUID = -7602836195129808135L;
+
+	private int position;
     private String attribute;
     private String value;
     private CordieOperation attributeOp;
