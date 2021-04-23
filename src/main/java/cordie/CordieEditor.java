@@ -1,24 +1,27 @@
 package cordie;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
-import java.util.Base64;
 
+import javax.annotation.Resource;
 import javax.inject.Inject;
+import javax.jms.ConnectionFactory;
+import javax.jms.JMSContext;
+import javax.jms.JMSException;
+import javax.jms.ObjectMessage;
+import javax.jms.Queue;
+import javax.jms.QueueBrowser;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-
+import cordie.diagram.CordieCollaborationMap;
 import cordie.diagram.CordieMessage;
+import cordie.diagram.CordieMessageHandler;
 import cordie.diagram.operation.CordieAddCollaboratorOperation;
+import cordie.diagram.operation.CordieAddUserOperation;
 import cordie.diagram.operation.CordieDeleteOperation;
 import cordie.diagram.operation.CordieEditOperation;
 import cordie.diagram.operation.CordieInsertOperation;
@@ -29,42 +32,33 @@ import cordie.diagram.operation.CordieRemoveCollaboratorOperation;
 import cordie.model.Diagram;
 import cordie.model.DiagramEditor;
 import cordie.model.DiagramSession;
-import cordie.model.DiagramSessionMessage;
 import cordie.model.User;
-import cordie.serializer.DiagramSessionSerializer;
-import cordie.service.DiagramEditorService;
 import cordie.service.DiagramService;
-import cordie.service.DiagramSessionMessageService;
-import cordie.service.DiagramSessionService;
 import cordie.service.UserService;
 
 public class CordieEditor extends HttpServlet {
 
 	private static final long serialVersionUID = 7884530719982139739L;
 
-	//private Map<String, DiagramManager> diagrams;
-
 	@Inject
 	private DiagramService diagramService;
-	
+
 	@Inject
 	private UserService userService;
-	
+
 	@Inject
-	private DiagramSessionService diagramSessionService;
-	
-	@Inject
-	private DiagramEditorService diagramEditorService;
-	
-	@Inject
-	private DiagramSessionMessageService diagramSessionMessageService;
+	private CordieCollaborationMap cordieCollaborationMap;
+
+	@Resource(mappedName = "java:jboss/DefaultJMSConnectionFactory")
+	private ConnectionFactory connectionFactory;
+
+	@Resource(lookup = "java:/jms/queue/CordieQueue")
+	private Queue cordieQueue;
 
 //	@SuppressWarnings("unchecked")
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-//		CordieDiagramsMap cdm = CordieDiagramsMap.getInstance();
-//		diagrams = cdm.getMap();
 	}
 
 	@Override
@@ -77,110 +71,98 @@ public class CordieEditor extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		String action = request.getParameter("action");
-		String id = request.getParameter("id");//actual diagram_id in db
+		String id = request.getParameter("id");// actual diagram_id in db
 		String username = (String) request.getSession().getAttribute("USERNAME");
 		String editorID = request.getParameter("editorID");
-		
-		long diagramId = (id == null) ? -1 : Long.parseLong(id);
-		Diagram diagram = (id == null) ? null : diagramService.getDiagramByIdAndUsername(diagramId, username);
+
+		Diagram diagram = (id == null) ? null : diagramService.getDiagramByIdAndUsername(Long.parseLong(id), username);
 		User user = userService.getUserByUsername(username);
-		
+
 		PrintWriter writer = response.getWriter();
 
 		if (action.equals("newUser")) {
+
 			// Avoid errors when two or more users open a diagram all at the same time
-//			synchronized (diagrams) {
-				
-				DiagramSession diagramSession = diagramSessionService.getDiagramSessionByDiagramId(diagramId);
-				if (diagramSession == null) {//!diagrams.containsKey(id)) {
+			DiagramSession diagramSession = cordieCollaborationMap.getDiagramSessionMap().get(id);
+			if (diagramSession == null) {// !diagrams.containsKey(id)) {
 
-					if (diagram == null) {
-						writer.println(
-								"{\"error\" : \"This diagram does not exist, no longer available, or you do not have permission to edit.\", \"errorType\" : 1}");
-						writer.close();
-						return;
-					}
-
-//					DiagramManager cordieDiagram = new DiagramManager(diagram);
-//					diagrams.put(id, cordieDiagram);
-					diagramSession = new DiagramSession();
-					diagramSession.setDiagram(diagram);
-					diagramSessionService.insertDiagramSession(diagramSession);
-
-//					ExecutorService executor = Executors.newFixedThreadPool(1);
-//					try {
-//						executor.execute(new CordieMessageDirector(cordieDiagram));
-//					} catch (Exception exception) {
-//						exception.printStackTrace();
-//					}
-//					executor.shutdown();
-				} else if (diagram != null && !diagram.getCollaborators().contains(user)) {//(!diagrams.get(id).allowsEditFrom(username)) {
+				if (diagram == null) {
 					writer.println(
-							"{\"error\" : \"You do not have permission to edit this diagram.\", \"errorType\" : 1}");
+							"{\"error\" : \"This diagram does not exist, no longer available, or you do not have permission to edit.\", \"errorType\" : 1}");
 					writer.close();
 					return;
 				}
 
-				DiagramEditor diagramEditor = new DiagramEditor();
-				diagramEditor.setDiagramSession(diagramSession);
-				diagramEditor.setUser(user);
-				diagramEditorService.insertDiagramEditor(diagramEditor);
-				diagramSession.getDiagramEditors().add(diagramEditor);
-				editorID = Long.toString(diagramEditor.getId());
-//				writer.println(diagrams.get(id).addEditor(username));
-				
-				ObjectMapper mapper = new ObjectMapper();
-				SimpleModule module = new SimpleModule("DiagramSessionSerializer", new Version(1, 0, 0, null, null, null));
-				module.addSerializer(DiagramSession.class, new DiagramSessionSerializer());
-				mapper.registerModule(module);
-				writer.println("{\"diagram\" : " + mapper.writeValueAsString(diagramSession) + ", \"editorID\" : \"" + editorID + "\"}");
-//			}
+				diagramSession = new DiagramSession(diagram);
+				cordieCollaborationMap.getDiagramSessionMap().put(id, diagramSession);
+			} else if (diagram != null && !diagram.getCollaborators().contains(user)) {
+				writer.println("{\"error\" : \"You do not have permission to edit this diagram.\", \"errorType\" : 1}");
+				writer.close();
+				return;
+			}
+
+			DiagramEditor newDiagramEditor = new DiagramEditor(diagramSession, userService.getUserByUsername(username));
+			writer.println(diagramSession.addEditor(newDiagramEditor));
+			CordieOperation co = new CordieAddUserOperation(newDiagramEditor.getUser().getUsername());
+			try (JMSContext jmsContext = connectionFactory.createContext();) {
+				ObjectMessage message = jmsContext.createObjectMessage();
+				message.setObject(new CordieMessage(editorID, co, 0, 0));
+				message.setStringProperty(CordieMessageHandler.RECIPIENT_DIAGRAM_ID_PROPERTY, id);
+				message.setStringProperty(CordieMessageHandler.SENDER_EDITOR_ID_PROPERTY, editorID);
+				jmsContext.createProducer().send(cordieQueue, message);
+			} catch (JMSException e) {
+				e.printStackTrace();
+			}
 			return;
 		}
 
 		if (action.equals("addcollaborator")) {
 			String newCollaborator = request.getParameter("collaborator");
 
-			Diagram currentDiagram = diagramService.getDiagramById(Long.parseLong(id));//diagrams.get(id).getDiagram();
+			Diagram currentDiagram = diagramService.getDiagramById(Long.parseLong(id));// diagrams.get(id).getDiagram();
 			if (!currentDiagram.getCreator().getUsername().equals(username)) {
-				writer.println(
-						"{\"error\" : \"You are not allowed to add collaborators.\", \"errorType\" : 2}");
+				writer.println("{\"error\" : \"You are not allowed to add collaborators.\", \"errorType\" : 2}");
 				return;
 			} else {
-				User newCollaboratorUser = newCollaborator != null ? userService.getUserByUsername(newCollaborator) : null;
-				
+				User newCollaboratorUser = newCollaborator != null ? userService.getUserByUsername(newCollaborator)
+						: null;
+
 				if (newCollaboratorUser == null) {
 					writer.println("{\"error\" : \"User with the username " + newCollaborator
 							+ " does not exist.\", \"errorType\" : 2}");
 					writer.close();
 					return;
 				}
-				
+
 				if (currentDiagram.getCollaborators().contains(newCollaboratorUser)) {
-					writer.println("{\"error\" : \"" + newCollaborator
-							+ " is already a collaborator.\", \"errorType\" : 2}");
+					writer.println(
+							"{\"error\" : \"" + newCollaborator + " is already a collaborator.\", \"errorType\" : 2}");
 					writer.close();
 					return;
 				}
-				
+
 				currentDiagram.addCollaborator(newCollaboratorUser);
 				userService.updateUser(newCollaboratorUser);
-			
+
 				// Send out an AddCollaborator operation to the diagram if it's currently live
-				DiagramSession diagramSession = diagramSessionService.getDiagramSessionById(diagramId);
+				DiagramSession diagramSession = cordieCollaborationMap.getDiagramSessionMap().get(id);
 				if (diagramSession != null) {
-				//if (diagrams.containsKey(id)) {
-					CordieOperation co = new CordieAddCollaboratorOperation(newCollaborator, newCollaboratorUser.getFirstname(), newCollaboratorUser.getLastname(),
+					CordieOperation co = new CordieAddCollaboratorOperation(newCollaborator,
+							newCollaboratorUser.getFirstname(), newCollaboratorUser.getLastname(),
 							newCollaboratorUser.getEmail());
-//					diagrams.get(id).queueMessage(new CordieMessage(null, co, 0, 0));
-					
-					DiagramSessionMessage dsm = new DiagramSessionMessage();
-					dsm.setDiagramSession(diagramSession);
-					dsm.setMessage(cordieOperationToBase64(new CordieMessage(null, co, 0, 0)));
-					diagramSessionMessageService.insertDiagramSessionMessage(dsm);
+
+					try (JMSContext jmsContext = connectionFactory.createContext();) {
+						ObjectMessage message = jmsContext.createObjectMessage();
+						message.setObject(new CordieMessage(null, co, 0, 0));
+						message.setStringProperty(CordieMessageHandler.RECIPIENT_DIAGRAM_ID_PROPERTY, id);
+						message.setStringProperty(CordieMessageHandler.SENDER_EDITOR_ID_PROPERTY, null);
+						jmsContext.createProducer().send(cordieQueue, message);
+					} catch (JMSException e) {
+						e.printStackTrace();
+					}
+
 				}
-				writer.println(
-						"{\"response\" : \" " + newCollaborator + " is being added as collaborator.\"}");
+				writer.println("{\"response\" : \" " + newCollaborator + " is being added as collaborator.\"}");
 				writer.close();
 				return;
 			}
@@ -188,58 +170,61 @@ public class CordieEditor extends HttpServlet {
 
 		if (action.equals("removecollaborator")) {
 			String toRemove = request.getParameter("collaborator");
-			
-			Diagram currentDiagram = diagramService.getDiagramById(Long.parseLong(id));//diagrams.get(id).getDiagram();
+
+			Diagram currentDiagram = diagramService.getDiagramById(Long.parseLong(id));// diagrams.get(id).getDiagram();
 			if (!currentDiagram.getCreator().getUsername().equals(username)) {
 				writer.println("{\"error\" : \"You are not allowed to remove collaborators.\", \"errorType\" : 2}");
 				return;
 			} else {
 				User toRemoveUser = toRemove != null ? userService.getUserByUsername(toRemove) : null;
-				
+
 				if (currentDiagram.getCreator().equals(toRemoveUser)) {
 					writer.println("{\"error\" : \"The creator of this diagram "
 							+ "cannot be removed from the list of collaborators.\", \"errorType\" : 2}");
 					writer.close();
 					return;
 				}
-				
+
 				if (!currentDiagram.getCollaborators().contains(toRemoveUser)) {
 					writer.println("{\"error\" : \"" + toRemove
 							+ " is not a collaborator of this diagram.\", \"errorType\" : 2}");
 					writer.close();
 					return;
 				}
-				
+
 				currentDiagram.removeCollaborator(toRemoveUser);
 				userService.updateUser(toRemoveUser);
-				
+
 				// Send out a RemoveCollaborator operation to the diagram if it's currently live
-				DiagramSession diagramSession = diagramSessionService.getDiagramSessionById(diagramId);
+				DiagramSession diagramSession = cordieCollaborationMap.getDiagramSessionMap().get(id);
+
 				if (diagramSession != null) {
-//				if (diagrams.containsKey(id)) {
 					CordieOperation co = new CordieRemoveCollaboratorOperation(toRemove);
-//					diagrams.get(id).queueMessage(new CordieMessage(null, co, 0, 0));
-					DiagramSessionMessage dsm = new DiagramSessionMessage();
-					dsm.setDiagramSession(diagramSession);
-					dsm.setMessage(cordieOperationToBase64(new CordieMessage(null, co, 0, 0)));
-					diagramSessionMessageService.insertDiagramSessionMessage(dsm);
+
+					try (JMSContext jmsContext = connectionFactory.createContext();) {
+						ObjectMessage message = jmsContext.createObjectMessage();
+						message.setObject(new CordieMessage(null, co, 0, 0));
+						message.setStringProperty(CordieMessageHandler.RECIPIENT_DIAGRAM_ID_PROPERTY, id);
+						message.setStringProperty(CordieMessageHandler.SENDER_EDITOR_ID_PROPERTY, null);
+						jmsContext.createProducer().send(cordieQueue, message);
+					} catch (JMSException e) {
+						e.printStackTrace();
+					}
 				}
-				
+
 				writer.println("{\"response\" : \"" + toRemove + "is being removed as collaborator.\"}");
 				writer.close();
 				return;
 			}
 		}
 
-		DiagramSession diagramSession = diagramSessionService.getDiagramSessionByDiagramId(diagramId);
+		DiagramSession diagramSession = cordieCollaborationMap.getDiagramSessionMap().get(id);
 		if (diagramSession == null) {
-//		if (!diagrams.containsKey(id)) {
 			writer.println("{\"error\" : \"This diagram no longer exists.\", \"errorType\" : 1}");
 			return;
 		}
 
-//		if (!diagrams.get(id).hasCurrentEditor(editorID)) {
-		DiagramEditor diagramEditor = diagramEditorService.getDiagramEditorById(Long.parseLong(editorID));//diagramEditorService.getDiagramEditorByDiagramSessionIdAndUserId(diagramSession.getId(), user.getId());
+		DiagramEditor diagramEditor = diagramSession.getCurrentEditors().get(editorID);
 		if (diagramEditor == null) {
 			writer.println("{\"error\" : \"You no longer have permission to edit this diagram.\", \"errorType\" : 1}");
 			return;
@@ -270,35 +255,32 @@ public class CordieEditor extends HttpServlet {
 				co = new CordieNoneOperation();
 			}
 
-			DiagramSessionMessage dsm = new DiagramSessionMessage();
-			dsm.setDiagramSession(diagramSession);
-			dsm.setMessage(cordieOperationToBase64(new CordieMessage(editorID, co, myMsgs, otherMsgs)));
-			diagramSessionMessageService.insertDiagramSessionMessage(dsm);
-//			diagrams.get(id).queueMessage(new CordieMessage(editorID, co, myMsgs, otherMsgs));
+			try (JMSContext jmsContext = connectionFactory.createContext();) {
+				ObjectMessage message = jmsContext.createObjectMessage();
+				message.setObject(new CordieMessage(editorID, co, myMsgs, otherMsgs));
+				message.setStringProperty(CordieMessageHandler.RECIPIENT_DIAGRAM_ID_PROPERTY, id);
+				message.setStringProperty(CordieMessageHandler.SENDER_EDITOR_ID_PROPERTY, editorID);
+				jmsContext.createProducer().send(cordieQueue, message);
+			} catch (JMSException e) {
+				e.printStackTrace();
+			}
 
 			return;
 		}
 
-		//TODO uncomment below
-		/*if (action.equals("askUpdate")) {
-			if (diagrams.get(id).messageQueueEmpty() && diagrams.get(id).getClient(editorID).hasUpdates()) {
-				writer.println(diagrams.get(id).getClient(editorID).getUpdates());
-			} else {
-			}
-		}*/
-	}
+		if (action.equals("askUpdate")) {
+			try (JMSContext jmsContext = connectionFactory.createContext();) {
+				QueueBrowser queueBrowser = jmsContext.createBrowser(cordieQueue,
+						CordieMessageHandler.RECIPIENT_DIAGRAM_ID_PROPERTY + "=" + id);
+				boolean isMessageQueueEmpty = !queueBrowser.getEnumeration().hasMoreElements();
 
-	private String cordieOperationToBase64(CordieMessage cordieMessage) {
-		try {
-		    ByteArrayOutputStream bo = new ByteArrayOutputStream();
-		    ObjectOutputStream so = new ObjectOutputStream(bo);
-		    so.writeObject(cordieMessage);
-		    so.flush();
-		    return new String(Base64.getEncoder().encodeToString(bo.toByteArray()));       
-		} 
-		catch (Exception e) {
-		    e.printStackTrace();
-		    return null;
+				if (isMessageQueueEmpty && diagramEditor.hasUpdates()) {
+					writer.println(diagramEditor.getUpdates());
+				} else {
+				}
+			} catch (JMSException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }

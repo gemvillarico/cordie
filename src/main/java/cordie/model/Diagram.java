@@ -15,7 +15,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.PreRemove;
 import javax.persistence.PreUpdate;
@@ -63,9 +62,6 @@ public class Diagram implements Serializable {
 	@ManyToMany(mappedBy = "diagrams", cascade = { CascadeType.REFRESH, CascadeType.PERSIST }, fetch = FetchType.EAGER)
 	private List<User> collaborators;
 	
-	@OneToOne(mappedBy = "diagram")
-	private DiagramSession diagramSession;
-
 	public long getId() {
 		return id;
 	}

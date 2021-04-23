@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.ListIterator;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -83,10 +84,10 @@ public class DiagramSessionSerializer extends StdSerializer<DiagramSession> {
 
 		String temp = StringUtils.EMPTY;
 
-		if (diagramSession.getDiagramEditors() != null) {
-			Iterator<DiagramEditor> deIterator = diagramSession.getDiagramEditors().iterator();
+		if (diagramSession.getCurrentEditors() != null) {
+			Iterator<Entry<String, DiagramEditor>> deIterator = diagramSession.getCurrentEditors().entrySet().iterator();
 			while (deIterator.hasNext()) {
-				temp += "\"" + StringEscapeUtils.escapeJava(deIterator.next().getUser().getUsername()) + "\"";
+				temp += "\"" + StringEscapeUtils.escapeJava(deIterator.next().getValue().getUser().getUsername()) + "\"";
 
 				if (deIterator.hasNext()) {
 					temp += ", ";
@@ -94,7 +95,7 @@ public class DiagramSessionSerializer extends StdSerializer<DiagramSession> {
 			}
 		}
 
-		gen.writeRawValue("[" + temp + "]");
+		gen.writeRawValue("[" + temp + "]");/**/
 	}
 
 	private void writeDiagramObjectsField(Diagram diagram, JsonGenerator gen) throws IOException {

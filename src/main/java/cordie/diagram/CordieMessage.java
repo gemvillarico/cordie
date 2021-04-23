@@ -1,9 +1,14 @@
 package cordie.diagram;
 
+import java.io.Serializable;
+
 import cordie.diagram.operation.CordieOperation;
 
-public class CordieMessage {
-    private String sender;
+public class CordieMessage implements Serializable {
+
+	private static final long serialVersionUID = -7122090415615240959L;
+	
+	private String sender;
     private CordieOperation op;
     private int myMsgs;
     private int otherMsgs;
