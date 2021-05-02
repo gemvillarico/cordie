@@ -1,0 +1,30 @@
+version: "2"
+
+services:
+  app:
+    container_name: "app"
+    image: "cordie-app"
+    depends_on:
+      - db
+    ports:
+      - "8080:8080" # application
+      - "9990:9990" # admin console
+
+  db:
+    container_name: "db"
+    image: "mysql:8.0.20"
+    command: "--default-authentication-plugin=mysql_native_password"
+    restart: "always"
+    environment:
+      - MYSQL_DATABASE=cordie
+      - MYSQL_USER=Cordie
+      - MYSQL_PASSWORD=pSJcwyTNSeLHAAV2
+      - MYSQL_ROOT_PASSWORD=pSJcwyTNSeLHAAV2
+    volumes:
+      - ./resources/mysql:/docker-entrypoint-initdb.d
+    ports:
+      - "7306:3306"
+
+networks:
+  default:
+    driver: bridge

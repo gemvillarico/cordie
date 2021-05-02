@@ -1,5 +1,6 @@
 ##### Others #####
 .project
+workdir/
 
 ##### Eclipse #####
 .metadata
