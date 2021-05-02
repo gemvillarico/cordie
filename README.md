@@ -34,18 +34,16 @@ Requirements
 4. Maven
 
 Steps
-1. Import the database
-    i. Create a database 'cordie' in terminal:
+1. Import the database\
+   1.1. Create a database 'cordie' in terminal:
 ```
 mysql> create database cordie;
 ```
-    
-    ii. Import resources/mysql/cordie.sql using terminal:
+   1.2. Import resources/mysql/cordie.sql using terminal:
 ```
 mysql -u <username> -p cordie < cordie.sql
 ```
-
-    iii. Create db user 'Cordie' with password 'pSJcwyTNSeLHAAV2' (or you can set to your own password, just make sure to update standalone.xml accordingly):
+   1.3. Create db user 'Cordie' with password 'pSJcwyTNSeLHAAV2' (or you can set to your own password, just make sure to update standalone.xml accordingly):
 ```
 mysql> CREATE USER 'Cordie'@'localhost' IDENTIFIED BY 'pSJcwyTNSeLHAAV2';
 mysql> GRANT ALL PRIVILEGES ON * . * TO 'Cordie'@'localhost';
