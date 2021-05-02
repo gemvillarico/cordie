@@ -36,29 +36,28 @@ Requirements
 Steps
 1. Import the database\
    1.1. Create a database 'cordie' in terminal:
-```
-mysql> create database cordie;
-```
+   ```
+   mysql> create database cordie;
+   ```
    1.2. Import resources/mysql/cordie.sql using terminal:
-```
-mysql -u <username> -p cordie < cordie.sql
-```
+   ```
+   mysql -u <username> -p cordie < cordie.sql
+   ```
    1.3. Create db user 'Cordie' with password 'pSJcwyTNSeLHAAV2' (or you can set to your own password, just make sure to update standalone.xml accordingly):
-```
-mysql> CREATE USER 'Cordie'@'localhost' IDENTIFIED BY 'pSJcwyTNSeLHAAV2';
-mysql> GRANT ALL PRIVILEGES ON * . * TO 'Cordie'@'localhost';
-mysql> FLUSH PRIVILEGES;
-```
-
-2. Set up WildFly application server
-    i. Download WildFly application server (this application used version 19).
-    ii. Add the com.mysql module to WildFly by copying resources/wildfly/modules/com/mysql to your ${WildFlyHome}/modules/system/layers/base/com directory.
-    iii. Update your WildFly standalone.xml to the one in resources/wildfly/standalone.xml
+   ```
+   mysql> CREATE USER 'Cordie'@'localhost' IDENTIFIED BY 'pSJcwyTNSeLHAAV2';
+   mysql> GRANT ALL PRIVILEGES ON * . * TO 'Cordie'@'localhost';
+   mysql> FLUSH PRIVILEGES;
+   ```
+2. Set up WildFly application server\
+   2.1. Download WildFly application server (this application used version 19).\
+   2.2. Add the com.mysql module to WildFly by copying resources/wildfly/modules/com/mysql to your ${WildFlyHome}/modules/system/layers/base/com directory.\
+   2.3. Update your WildFly standalone.xml to the one in resources/wildfly/standalone.xml
 3. On terminal, change the working directory to the cordie directory, then run
 ```
 mvn clean package
 ```
-4. Copy generated war file on target/cordie.war to ${WildFlyHome}/deployments
+4. Copy the generated war file on target/cordie.war to ${WildFlyHome}/deployments
 5. Start WildFly Server by running the following command on terminal 
 ```
 ${WildFlyHome}/bin/standalone.sh
